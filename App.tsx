@@ -16,10 +16,10 @@ import {
   Lock,
   Music
 } from 'lucide-react';
-import { AnalysisStatus } from './types';
-import type { MediaMetadata } from './types';
-import { extractMetadata, formatBytes, formatDuration } from './utils/mediaProcessor';
-import InfoGrid from './components/InfoGrid';
+import { AnalysisStatus } from './types.ts';
+import type { MediaMetadata } from './types.ts';
+import { extractMetadata, formatBytes, formatDuration } from './utils/mediaProcessor.ts';
+import InfoGrid from './components/InfoGrid.tsx';
 
 const App: React.FC = () => {
   const [metadata, setMetadata] = useState<MediaMetadata | null>(null);
@@ -268,7 +268,7 @@ const App: React.FC = () => {
 
             <div className="bg-zinc-900/40 border border-zinc-800 p-6 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex items-start gap-4 max-w-2xl">
-                <Info size={18} className="text-blue-500 shrink-0 mt-1" />
+                <span className="text-blue-500 shrink-0 mt-1"><Info size={18}/></span>
                 <p className="text-xs text-zinc-400 leading-relaxed">
                   <span className="text-zinc-200 font-bold">プロのヒント:</span> 
                   {metadata.mimeType.startsWith('image/') 
