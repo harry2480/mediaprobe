@@ -2,13 +2,9 @@
 import React, { useState, useCallback } from 'react';
 import { 
   Upload, 
-  FileVideo, 
-  ImageIcon, 
-  Music,
   Settings, 
   Activity, 
   Zap,
-  CheckCircle2,
   AlertCircle,
   Clock,
   HardDrive,
@@ -17,11 +13,13 @@ import {
   Printer,
   Database,
   ShieldCheck,
-  Lock
+  Lock,
+  Music
 } from 'lucide-react';
-import { MediaMetadata, AnalysisStatus } from './types.ts';
-import { extractMetadata, formatBytes, formatDuration } from './utils/mediaProcessor.ts';
-import InfoGrid from './components/InfoGrid.tsx';
+import { AnalysisStatus } from './types';
+import type { MediaMetadata } from './types';
+import { extractMetadata, formatBytes, formatDuration } from './utils/mediaProcessor';
+import InfoGrid from './components/InfoGrid';
 
 const App: React.FC = () => {
   const [metadata, setMetadata] = useState<MediaMetadata | null>(null);
@@ -187,7 +185,6 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Technical Detail Grid */}
             <section className="space-y-4">
               <div className="flex items-center gap-4 px-2">
                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500 flex items-center gap-2">
@@ -197,7 +194,6 @@ const App: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Efficiency Card */}
                 <div className="md:col-span-2 bg-zinc-900/20 border border-zinc-800 rounded-3xl p-6 space-y-6">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
@@ -224,7 +220,6 @@ const App: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Specific Tool Card */}
                 <div className="bg-blue-600/5 border border-blue-500/20 rounded-3xl p-6 flex flex-col justify-between">
                    {metadata.printSizes ? (
                      <>
