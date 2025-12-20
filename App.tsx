@@ -19,9 +19,9 @@ import {
   ShieldCheck,
   Lock
 } from 'lucide-react';
-import { MediaMetadata, AnalysisStatus } from './types';
-import { extractMetadata, formatBytes, formatDuration } from './utils/mediaProcessor';
-import InfoGrid from './components/InfoGrid';
+import { MediaMetadata, AnalysisStatus } from './types.ts';
+import { extractMetadata, formatBytes, formatDuration } from './utils/mediaProcessor.ts';
+import InfoGrid from './components/InfoGrid.tsx';
 
 const App: React.FC = () => {
   const [metadata, setMetadata] = useState<MediaMetadata | null>(null);

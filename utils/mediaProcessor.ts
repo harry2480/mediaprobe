@@ -1,5 +1,5 @@
 
-import { MediaMetadata, PrintSize } from "../types";
+import { MediaMetadata, PrintSize } from "../types.ts";
 
 const getStandardLabel = (w: number, h: number): string | undefined => {
   const pixels = w * h;

@@ -1,10 +1,10 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MediaProbe</title>
+    <title>MediaProbe - 技術仕様解析ツール</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
@@ -16,7 +16,7 @@
         .mono {
             font-family: 'JetBrains Mono', monospace;
         }
-        /* Custom scrollbar */
+        /* カスタムスクルロールバー */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -46,6 +46,8 @@
 </head>
 <body>
     <div id="root"></div>
+    <!-- index.tsx をモジュールとして読み込み -->
+    <script type="module" src="./index.tsx"></script>
 <script type="module" src="/index.tsx"></script>
 </body>
 </html>
