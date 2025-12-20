@@ -16,7 +16,8 @@ import {
   Info,
   Printer,
   Database,
-  ShieldCheck
+  ShieldCheck,
+  Lock
 } from 'lucide-react';
 import { MediaMetadata, AnalysisStatus } from './types';
 import { extractMetadata, formatBytes, formatDuration } from './utils/mediaProcessor';
@@ -39,7 +40,7 @@ const App: React.FC = () => {
       setStatus(AnalysisStatus.COMPLETED);
     } catch (err) {
       console.error(err);
-      setError("解析に失敗しました。ファイルが壊れているか、対応外の可能性があります。");
+      setError("解析に失敗しました。ファイル形式が非対応か、読み込み中にエラーが発生しました。");
       setStatus(AnalysisStatus.ERROR);
     }
   };
@@ -67,13 +68,16 @@ const App: React.FC = () => {
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
             <Activity size={18} className="text-white" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight">MediaProbe <span className="text-zinc-500 font-normal">Expert</span></h1>
+          <h1 className="text-xl font-bold tracking-tight">MediaProbe <span className="text-zinc-500 font-normal">技術解析</span></h1>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-[10px] font-mono text-zinc-600 hidden sm:inline uppercase tracking-widest">v1.5 Enterprise</span>
+          <div className="flex items-center gap-1.5 bg-green-500/10 px-2 py-1 rounded border border-green-500/20 hidden sm:flex">
+            <Lock size={12} className="text-green-500" />
+            <span className="text-[10px] font-bold text-green-500 uppercase">完全ローカル解析 (プライバシー保護)</span>
+          </div>
           {status !== AnalysisStatus.IDLE && (
-            <button onClick={reset} className="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-full transition-all border border-zinc-700">
-              新規解析
+            <button onClick={reset} className="text-xs bg-zinc-800 hover:bg-zinc-700 px-4 py-1.5 rounded-full transition-all border border-zinc-700">
+              別のファイルを解析
             </button>
           )}
         </div>
@@ -87,8 +91,8 @@ const App: React.FC = () => {
                 メディアを精密に<br/>プロファイリング
               </h2>
               <p className="text-zinc-400 text-lg">
-                ビットレート、サンプリング、圧縮率、印刷サイズ。<br/>
-                プロの現場で必要な技術データをローカルで高速抽出。
+                ビットレート、解像度、圧縮率、想定印刷サイズ。<br/>
+                容量制限なし。100%デバイス上で動作する高速解析ツール。
               </p>
             </div>
             
@@ -106,7 +110,11 @@ const App: React.FC = () => {
                 </div>
                 <div className="text-center space-y-2">
                   <p className="text-zinc-200 font-bold text-xl">ファイルをドロップして解析開始</p>
-                  <p className="text-zinc-500 font-mono text-xs">Video / Audio / Photo / Technical formats</p>
+                  <p className="text-zinc-500 font-mono text-xs">動画 / 音声 / 写真 / 各種技術フォーマット</p>
+                </div>
+                <div className="mt-4 px-4 py-2 bg-zinc-800/50 rounded-full border border-zinc-700/50 flex items-center gap-2">
+                  <Info size={14} className="text-blue-400" />
+                  <span className="text-[11px] text-zinc-400 font-medium">ブラウザ内処理のため、容量制限はありません。アップロードは行われません。</span>
                 </div>
                 <input type="file" className="hidden" onChange={(e) => e.target.files?.[0] && processFile(e.target.files[0])} />
               </div>
@@ -117,7 +125,7 @@ const App: React.FC = () => {
         {status === AnalysisStatus.EXTRACTING && (
           <div className="h-[60vh] flex flex-col items-center justify-center gap-6 animate-pulse">
             <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
-            <p className="text-zinc-500 font-mono text-sm tracking-widest uppercase">Deep probing in progress...</p>
+            <p className="text-zinc-500 font-mono text-sm tracking-widest uppercase">技術仕様を精密スキャン中...</p>
           </div>
         )}
 
@@ -132,7 +140,6 @@ const App: React.FC = () => {
 
         {metadata && (
           <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 space-y-8 pb-12">
-            {/* Header Card */}
             <div className="grid lg:grid-cols-12 gap-8 items-stretch">
               {/* Preview Box */}
               <div className="lg:col-span-5 bg-zinc-900 rounded-[2rem] border border-zinc-800 overflow-hidden relative shadow-2xl">
@@ -143,12 +150,12 @@ const App: React.FC = () => {
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-4 min-h-[300px]">
                     <div className="w-24 h-24 bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500"><Music size={40}/></div>
-                    <p className="text-zinc-500 font-mono text-xs">AUDIO PAYLOAD ONLY</p>
+                    <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">音声ペイロードのみ</p>
                   </div>
                 )}
                 {metadata.standardLabel && (
                   <div className="absolute top-4 left-4 bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg uppercase tracking-tighter">
-                    {metadata.standardLabel}
+                    規格: {metadata.standardLabel}
                   </div>
                 )}
               </div>
@@ -158,22 +165,22 @@ const App: React.FC = () => {
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <span className="bg-zinc-800 text-zinc-400 text-[10px] font-bold px-2.5 py-1 rounded-md border border-zinc-700 uppercase">{metadata.mimeType}</span>
-                    <span className="flex items-center gap-1.5 text-green-500 text-[10px] font-black uppercase tracking-widest"><ShieldCheck size={14}/> Accurate Extraction</span>
+                    <span className="flex items-center gap-1.5 text-green-500 text-[10px] font-black uppercase tracking-widest"><ShieldCheck size={14}/> 高精度データ抽出完了</span>
                   </div>
                   <h2 className="text-3xl font-black truncate leading-tight tracking-tight">{metadata.fileName}</h2>
                 </div>
                 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-6 pt-4">
                   <div className="space-y-1">
-                    <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5"><HardDrive size={12}/> File Size</p>
+                    <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5"><HardDrive size={12}/> ファイルサイズ</p>
                     <p className="text-xl font-black font-mono">{formatBytes(metadata.fileSize)}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5"><Maximize2 size={12}/> Resolution</p>
+                    <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5"><Maximize2 size={12}/> 解像度</p>
                     <p className="text-xl font-black font-mono">{metadata.width ? `${metadata.width}×${metadata.height}` : 'N/A'}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5"><Clock size={12}/> Duration</p>
+                    <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5"><Clock size={12}/> 再生時間</p>
                     <p className="text-xl font-black font-mono">{metadata.duration ? formatDuration(metadata.duration) : 'N/A'}</p>
                   </div>
                 </div>
@@ -184,7 +191,7 @@ const App: React.FC = () => {
             <section className="space-y-4">
               <div className="flex items-center gap-4 px-2">
                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500 flex items-center gap-2">
-                  <Settings size={14} className="text-blue-500"/> Advanced technical profiling
+                  <Settings size={14} className="text-blue-500"/> 詳細テクニカルプロファイリング
                 </h3>
                 <div className="flex-1 h-[1px] bg-zinc-800/50"></div>
               </div>
@@ -194,25 +201,25 @@ const App: React.FC = () => {
                 <div className="md:col-span-2 bg-zinc-900/20 border border-zinc-800 rounded-3xl p-6 space-y-6">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
-                      <p className="text-[10px] font-bold text-zinc-500 uppercase flex items-center gap-2"><Zap size={14}/> Data Density & Compression</p>
-                      <h4 className="text-lg font-bold">圧縮効率分析</h4>
+                      <p className="text-[10px] font-bold text-zinc-500 uppercase flex items-center gap-2"><Zap size={14}/> データ密度と圧縮効率</p>
+                      <h4 className="text-lg font-bold text-zinc-200">圧縮効率分析</h4>
                     </div>
                     {metadata.compressionRatio && (
                        <div className="text-right">
                          <p className="text-2xl font-black text-blue-500">{metadata.compressionRatio.toFixed(1)}%</p>
-                         <p className="text-[9px] text-zinc-600 font-bold uppercase">of raw size</p>
+                         <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-widest">RAWサイズ比率</p>
                        </div>
                     )}
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-zinc-950/50 border border-zinc-800/50 p-4 rounded-2xl">
-                      <p className="text-[10px] text-zinc-500 font-bold uppercase mb-1">Raw Data Size (est.)</p>
-                      <p className="text-lg font-mono font-bold">{formatBytes(metadata.uncompressedSize || 0)}</p>
+                      <p className="text-[10px] text-zinc-500 font-bold uppercase mb-1">推定非圧縮サイズ</p>
+                      <p className="text-lg font-mono font-bold text-zinc-300">{formatBytes(metadata.uncompressedSize || 0)}</p>
                     </div>
                     <div className="bg-zinc-950/50 border border-zinc-800/50 p-4 rounded-2xl">
-                      <p className="text-[10px] text-zinc-500 font-bold uppercase mb-1">Payload Bitrate</p>
-                      <p className="text-lg font-mono font-bold">{formatBitrate(metadata.mediaBitrate)}</p>
+                      <p className="text-[10px] text-zinc-500 font-bold uppercase mb-1">推定メディアビットレート</p>
+                      <p className="text-lg font-mono font-bold text-zinc-300">{formatBitrate(metadata.mediaBitrate)}</p>
                     </div>
                   </div>
                 </div>
@@ -222,14 +229,14 @@ const App: React.FC = () => {
                    {metadata.printSizes ? (
                      <>
                        <div className="space-y-1">
-                         <p className="text-[10px] font-bold text-blue-400 uppercase flex items-center gap-2"><Printer size={14}/> Print Spec</p>
+                         <p className="text-[10px] font-bold text-blue-400 uppercase flex items-center gap-2"><Printer size={14}/> 印刷仕様</p>
                          <h4 className="text-lg font-bold">印刷サイズ推定</h4>
                        </div>
                        <div className="space-y-3 pt-4">
                          {metadata.printSizes.map(p => (
                            <div key={p.dpi} className="flex justify-between items-center text-xs">
                              <span className="text-zinc-500 font-bold">{p.dpi} DPI</span>
-                             <span className="font-mono text-zinc-200">{p.widthCm.toFixed(1)} x {p.heightCm.toFixed(1)} cm</span>
+                             <span className="font-mono text-zinc-200 font-bold">{p.widthCm.toFixed(1)} x {p.heightCm.toFixed(1)} cm</span>
                            </div>
                          ))}
                        </div>
@@ -237,7 +244,7 @@ const App: React.FC = () => {
                    ) : metadata.storageOneHour ? (
                      <>
                        <div className="space-y-1">
-                         <p className="text-[10px] font-bold text-blue-400 uppercase flex items-center gap-2"><Database size={14}/> Storage Planner</p>
+                         <p className="text-[10px] font-bold text-blue-400 uppercase flex items-center gap-2"><Database size={14}/> ストレージ要件</p>
                          <h4 className="text-lg font-bold">1時間あたりの占有量</h4>
                        </div>
                        <div className="pt-4">
@@ -245,13 +252,13 @@ const App: React.FC = () => {
                            {formatBytes(metadata.storageOneHour)}
                          </p>
                          <p className="text-[10px] text-zinc-500 mt-2 leading-relaxed">
-                           このビットレートで収録を継続した場合の推定ストレージ使用量です。
+                           このビットレートで収録した場合の推定ストレージ使用量です。
                          </p>
                        </div>
                      </>
                    ) : (
                      <div className="h-full flex items-center justify-center">
-                        <p className="text-zinc-600 text-[10px] font-bold uppercase tracking-widest italic">No specific tool for audio</p>
+                        <p className="text-zinc-600 text-[10px] font-bold uppercase tracking-widest italic">追加の技術指標なし</p>
                      </div>
                    )}
                 </div>
@@ -259,8 +266,8 @@ const App: React.FC = () => {
 
               <InfoGrid items={[
                 { label: 'アスペクト比', value: metadata.aspectRatio, icon: <Maximize2 size={18}/> },
-                { label: 'サンプリングレート', value: metadata.sampleRate ? `${(metadata.sampleRate / 1000).toFixed(1)} kHz` : 'N/A', icon: <Activity size={18}/> },
-                { label: 'オーディオチャンネル', value: metadata.channels ? `${metadata.channels} ch` : 'N/A', icon: <Settings size={18}/> },
+                { label: 'サンプリング周波数', value: metadata.sampleRate ? `${(metadata.sampleRate / 1000).toFixed(1)} kHz` : 'N/A', icon: <Activity size={18}/> },
+                { label: 'チャンネル数', value: metadata.channels ? `${metadata.channels} ch` : 'N/A', icon: <Settings size={18}/> },
               ]} />
             </section>
 
@@ -268,14 +275,14 @@ const App: React.FC = () => {
               <div className="flex items-start gap-4 max-w-2xl">
                 <Info size={18} className="text-blue-500 shrink-0 mt-1" />
                 <p className="text-xs text-zinc-400 leading-relaxed">
-                  <span className="text-zinc-200 font-bold">Pro Tip:</span> 
+                  <span className="text-zinc-200 font-bold">プロのヒント:</span> 
                   {metadata.mimeType.startsWith('image/') 
-                    ? " 圧縮率が5%を下回る場合、情報の欠損が激しいか、非常に効率的なコーデック（WebP/AVIF等）が使用されていることを示唆します。"
-                    : " ビットレートの変動やコンテナ特有のオーバーヘッドを考慮し、数値には±2%程度の許容誤差が含まれる場合があります。"}
+                    ? " 圧縮率が5%を下回る場合、高度な効率化コーデック（WebP/AVIF等）または大きな情報欠損が発生している可能性があります。"
+                    : " コンテナの構造（MP4/MOV等）によって総ビットレートと実効ビットレートには僅かな差が生じます。"}
                 </p>
               </div>
               <div className="shrink-0 font-mono text-[10px] text-zinc-600 uppercase tracking-[0.2em]">
-                Local Analysis Engine / Secure Mode
+                技術解析エンジン / セキュアモード（オフライン対応）
               </div>
             </div>
           </div>
@@ -284,11 +291,11 @@ const App: React.FC = () => {
 
       <footer className="p-8 border-t border-zinc-800 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <p className="text-zinc-600 text-[10px] font-mono tracking-tight uppercase">MediaProbe Expert © 2024</p>
+          <p className="text-zinc-600 text-[10px] font-mono tracking-tight uppercase">MediaProbe 技術仕様解析エンジン © 2024</p>
           <div className="w-[1px] h-3 bg-zinc-800"></div>
-          <p className="text-zinc-600 text-[10px] font-mono tracking-tight uppercase">Precise Tech Spec Probe</p>
+          <p className="text-zinc-600 text-[10px] font-mono tracking-tight uppercase">高精度メディアプロファイラー</p>
         </div>
-        <p className="text-zinc-700 text-[10px] font-mono uppercase">Developed for high-end digital asset management</p>
+        <p className="text-zinc-700 text-[10px] font-mono uppercase tracking-widest">映像資産管理・品質管理向けツール</p>
       </footer>
     </div>
   );

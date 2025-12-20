@@ -41,10 +41,13 @@ const isAudioFile = (file: File): boolean => {
 
 async function probeAudioMetadata(file: File): Promise<{ sampleRate?: number; channels?: number }> {
   try {
+    // 巨大なファイルの場合でも先頭2MBだけを解析
     const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
     const arrayBuffer = await file.slice(0, 2 * 1024 * 1024).arrayBuffer();
+    
     const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer).catch(async () => {
-      if (file.size < 10 * 1024 * 1024) {
+      // 失敗した場合は全体を試みる（ただしファイルが小さい場合のみ）
+      if (file.size < 50 * 1024 * 1024) {
         const fullBuffer = await file.arrayBuffer();
         return await audioCtx.decodeAudioData(fullBuffer);
       }
@@ -77,7 +80,7 @@ export const extractMetadata = async (file: File): Promise<MediaMetadata> => {
         const audioInfo = await probeAudioMetadata(file);
         const standardLabel = getStandardLabel(video.videoWidth, video.videoHeight);
         
-        // 推定非圧縮サイズ (8bit 4:2:0 想定)
+        // 推定非圧縮サイズ (8bit 4:2:0 想定: 1.5bytes per pixel)
         const uncompressedSize = video.videoWidth * video.videoHeight * 1.5 * 30 * duration; 
 
         resolve({
