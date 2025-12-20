@@ -1,0 +1,297 @@
+
+import React, { useState, useCallback } from 'react';
+import { 
+  Upload, 
+  FileVideo, 
+  ImageIcon, 
+  Music,
+  Settings, 
+  Activity, 
+  Zap,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  HardDrive,
+  Maximize2,
+  Info,
+  Printer,
+  Database,
+  ShieldCheck
+} from 'lucide-react';
+import { MediaMetadata, AnalysisStatus } from './types';
+import { extractMetadata, formatBytes, formatDuration } from './utils/mediaProcessor';
+import InfoGrid from './components/InfoGrid';
+
+const App: React.FC = () => {
+  const [metadata, setMetadata] = useState<MediaMetadata | null>(null);
+  const [status, setStatus] = useState<AnalysisStatus>(AnalysisStatus.IDLE);
+  const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const processFile = async (selectedFile: File) => {
+    setError(null);
+    setMetadata(null);
+    setStatus(AnalysisStatus.EXTRACTING);
+
+    try {
+      const meta = await extractMetadata(selectedFile);
+      setMetadata(meta);
+      setStatus(AnalysisStatus.COMPLETED);
+    } catch (err) {
+      console.error(err);
+      setError("解析に失敗しました。ファイルが壊れているか、対応外の可能性があります。");
+      setStatus(AnalysisStatus.ERROR);
+    }
+  };
+
+  const onDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const droppedFile = e.dataTransfer.files?.[0];
+    if (droppedFile) processFile(droppedFile);
+  }, []);
+
+  const reset = () => {
+    if (metadata?.previewUrl) URL.revokeObjectURL(metadata.previewUrl);
+    setMetadata(null);
+    setStatus(AnalysisStatus.IDLE);
+    setError(null);
+  };
+
+  const formatBitrate = (bps?: number) => bps ? `${(bps / 1000).toFixed(2)} kbps` : 'N/A';
+
+  return (
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans selection:bg-blue-500/30">
+      <header className="sticky top-0 z-50 bg-black/60 backdrop-blur-md border-b border-zinc-800 py-4 px-6 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-900/20">
+            <Activity size={18} className="text-white" />
+          </div>
+          <h1 className="text-xl font-bold tracking-tight">MediaProbe <span className="text-zinc-500 font-normal">Expert</span></h1>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="text-[10px] font-mono text-zinc-600 hidden sm:inline uppercase tracking-widest">v1.5 Enterprise</span>
+          {status !== AnalysisStatus.IDLE && (
+            <button onClick={reset} className="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-full transition-all border border-zinc-700">
+              新規解析
+            </button>
+          )}
+        </div>
+      </header>
+
+      <main className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-8 space-y-8">
+        {status === AnalysisStatus.IDLE && (
+          <div className="h-[70vh] flex flex-col items-center justify-center space-y-12">
+            <div className="text-center space-y-4 max-w-xl animate-in fade-in slide-in-from-top-4">
+              <h2 className="text-4xl md:text-5xl font-black bg-gradient-to-br from-white to-zinc-600 bg-clip-text text-transparent leading-tight">
+                メディアを精密に<br/>プロファイリング
+              </h2>
+              <p className="text-zinc-400 text-lg">
+                ビットレート、サンプリング、圧縮率、印刷サイズ。<br/>
+                プロの現場で必要な技術データをローカルで高速抽出。
+              </p>
+            </div>
+            
+            <label 
+              className={`w-full max-w-3xl group cursor-pointer`}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={onDrop}
+            >
+              <div className={`relative border-2 border-dashed rounded-[2.5rem] p-16 flex flex-col items-center gap-6 transition-all duration-500 
+                ${isDragging ? 'border-blue-500 bg-blue-500/5 scale-[1.02] rotate-1' : 'border-zinc-800 bg-zinc-900/20 hover:border-zinc-700 hover:bg-zinc-900/40'} `}>
+                <div className={`w-20 h-20 rounded-2xl flex items-center justify-center border-2 transition-all duration-500
+                  ${isDragging ? 'bg-blue-600 border-blue-400 rotate-12 scale-110 shadow-xl shadow-blue-500/20' : 'bg-zinc-900 border-zinc-800 text-zinc-500 group-hover:text-zinc-200'}`}>
+                  <Upload size={32} />
+                </div>
+                <div className="text-center space-y-2">
+                  <p className="text-zinc-200 font-bold text-xl">ファイルをドロップして解析開始</p>
+                  <p className="text-zinc-500 font-mono text-xs">Video / Audio / Photo / Technical formats</p>
+                </div>
+                <input type="file" className="hidden" onChange={(e) => e.target.files?.[0] && processFile(e.target.files[0])} />
+              </div>
+            </label>
+          </div>
+        )}
+
+        {status === AnalysisStatus.EXTRACTING && (
+          <div className="h-[60vh] flex flex-col items-center justify-center gap-6 animate-pulse">
+            <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+            <p className="text-zinc-500 font-mono text-sm tracking-widest uppercase">Deep probing in progress...</p>
+          </div>
+        )}
+
+        {status === AnalysisStatus.ERROR && (
+          <div className="bg-red-500/10 border border-red-500/50 p-8 rounded-[2rem] flex flex-col items-center gap-4 max-w-lg mx-auto text-center">
+            <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center text-white"><AlertCircle size={24}/></div>
+            <h4 className="font-bold text-xl text-white">解析エラー</h4>
+            <p className="text-red-400/80 text-sm leading-relaxed">{error}</p>
+            <button onClick={reset} className="mt-4 bg-zinc-800 px-6 py-2 rounded-xl text-sm font-bold hover:bg-zinc-700 transition-colors">再試行</button>
+          </div>
+        )}
+
+        {metadata && (
+          <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 space-y-8 pb-12">
+            {/* Header Card */}
+            <div className="grid lg:grid-cols-12 gap-8 items-stretch">
+              {/* Preview Box */}
+              <div className="lg:col-span-5 bg-zinc-900 rounded-[2rem] border border-zinc-800 overflow-hidden relative shadow-2xl">
+                {metadata.mimeType.startsWith('image/') ? (
+                  <img src={metadata.previewUrl} alt="preview" className="w-full h-full object-contain bg-zinc-950 min-h-[300px]" />
+                ) : metadata.mimeType.startsWith('video/') ? (
+                  <video src={metadata.previewUrl} className="w-full h-full object-contain bg-zinc-950 min-h-[300px]" controls muted />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-4 min-h-[300px]">
+                    <div className="w-24 h-24 bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500"><Music size={40}/></div>
+                    <p className="text-zinc-500 font-mono text-xs">AUDIO PAYLOAD ONLY</p>
+                  </div>
+                )}
+                {metadata.standardLabel && (
+                  <div className="absolute top-4 left-4 bg-blue-600 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg uppercase tracking-tighter">
+                    {metadata.standardLabel}
+                  </div>
+                )}
+              </div>
+
+              {/* Basic Info Box */}
+              <div className="lg:col-span-7 bg-zinc-900/40 p-8 rounded-[2.5rem] border border-zinc-800 flex flex-col justify-between space-y-6">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <span className="bg-zinc-800 text-zinc-400 text-[10px] font-bold px-2.5 py-1 rounded-md border border-zinc-700 uppercase">{metadata.mimeType}</span>
+                    <span className="flex items-center gap-1.5 text-green-500 text-[10px] font-black uppercase tracking-widest"><ShieldCheck size={14}/> Accurate Extraction</span>
+                  </div>
+                  <h2 className="text-3xl font-black truncate leading-tight tracking-tight">{metadata.fileName}</h2>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-6 pt-4">
+                  <div className="space-y-1">
+                    <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5"><HardDrive size={12}/> File Size</p>
+                    <p className="text-xl font-black font-mono">{formatBytes(metadata.fileSize)}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5"><Maximize2 size={12}/> Resolution</p>
+                    <p className="text-xl font-black font-mono">{metadata.width ? `${metadata.width}×${metadata.height}` : 'N/A'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-zinc-500 text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5"><Clock size={12}/> Duration</p>
+                    <p className="text-xl font-black font-mono">{metadata.duration ? formatDuration(metadata.duration) : 'N/A'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Technical Detail Grid */}
+            <section className="space-y-4">
+              <div className="flex items-center gap-4 px-2">
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500 flex items-center gap-2">
+                  <Settings size={14} className="text-blue-500"/> Advanced technical profiling
+                </h3>
+                <div className="flex-1 h-[1px] bg-zinc-800/50"></div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Efficiency Card */}
+                <div className="md:col-span-2 bg-zinc-900/20 border border-zinc-800 rounded-3xl p-6 space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-zinc-500 uppercase flex items-center gap-2"><Zap size={14}/> Data Density & Compression</p>
+                      <h4 className="text-lg font-bold">圧縮効率分析</h4>
+                    </div>
+                    {metadata.compressionRatio && (
+                       <div className="text-right">
+                         <p className="text-2xl font-black text-blue-500">{metadata.compressionRatio.toFixed(1)}%</p>
+                         <p className="text-[9px] text-zinc-600 font-bold uppercase">of raw size</p>
+                       </div>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-zinc-950/50 border border-zinc-800/50 p-4 rounded-2xl">
+                      <p className="text-[10px] text-zinc-500 font-bold uppercase mb-1">Raw Data Size (est.)</p>
+                      <p className="text-lg font-mono font-bold">{formatBytes(metadata.uncompressedSize || 0)}</p>
+                    </div>
+                    <div className="bg-zinc-950/50 border border-zinc-800/50 p-4 rounded-2xl">
+                      <p className="text-[10px] text-zinc-500 font-bold uppercase mb-1">Payload Bitrate</p>
+                      <p className="text-lg font-mono font-bold">{formatBitrate(metadata.mediaBitrate)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Specific Tool Card */}
+                <div className="bg-blue-600/5 border border-blue-500/20 rounded-3xl p-6 flex flex-col justify-between">
+                   {metadata.printSizes ? (
+                     <>
+                       <div className="space-y-1">
+                         <p className="text-[10px] font-bold text-blue-400 uppercase flex items-center gap-2"><Printer size={14}/> Print Spec</p>
+                         <h4 className="text-lg font-bold">印刷サイズ推定</h4>
+                       </div>
+                       <div className="space-y-3 pt-4">
+                         {metadata.printSizes.map(p => (
+                           <div key={p.dpi} className="flex justify-between items-center text-xs">
+                             <span className="text-zinc-500 font-bold">{p.dpi} DPI</span>
+                             <span className="font-mono text-zinc-200">{p.widthCm.toFixed(1)} x {p.heightCm.toFixed(1)} cm</span>
+                           </div>
+                         ))}
+                       </div>
+                     </>
+                   ) : metadata.storageOneHour ? (
+                     <>
+                       <div className="space-y-1">
+                         <p className="text-[10px] font-bold text-blue-400 uppercase flex items-center gap-2"><Database size={14}/> Storage Planner</p>
+                         <h4 className="text-lg font-bold">1時間あたりの占有量</h4>
+                       </div>
+                       <div className="pt-4">
+                         <p className="text-3xl font-black text-blue-500 font-mono tracking-tighter">
+                           {formatBytes(metadata.storageOneHour)}
+                         </p>
+                         <p className="text-[10px] text-zinc-500 mt-2 leading-relaxed">
+                           このビットレートで収録を継続した場合の推定ストレージ使用量です。
+                         </p>
+                       </div>
+                     </>
+                   ) : (
+                     <div className="h-full flex items-center justify-center">
+                        <p className="text-zinc-600 text-[10px] font-bold uppercase tracking-widest italic">No specific tool for audio</p>
+                     </div>
+                   )}
+                </div>
+              </div>
+
+              <InfoGrid items={[
+                { label: 'アスペクト比', value: metadata.aspectRatio, icon: <Maximize2 size={18}/> },
+                { label: 'サンプリングレート', value: metadata.sampleRate ? `${(metadata.sampleRate / 1000).toFixed(1)} kHz` : 'N/A', icon: <Activity size={18}/> },
+                { label: 'オーディオチャンネル', value: metadata.channels ? `${metadata.channels} ch` : 'N/A', icon: <Settings size={18}/> },
+              ]} />
+            </section>
+
+            <div className="bg-zinc-900/40 border border-zinc-800 p-6 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-start gap-4 max-w-2xl">
+                <Info size={18} className="text-blue-500 shrink-0 mt-1" />
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  <span className="text-zinc-200 font-bold">Pro Tip:</span> 
+                  {metadata.mimeType.startsWith('image/') 
+                    ? " 圧縮率が5%を下回る場合、情報の欠損が激しいか、非常に効率的なコーデック（WebP/AVIF等）が使用されていることを示唆します。"
+                    : " ビットレートの変動やコンテナ特有のオーバーヘッドを考慮し、数値には±2%程度の許容誤差が含まれる場合があります。"}
+                </p>
+              </div>
+              <div className="shrink-0 font-mono text-[10px] text-zinc-600 uppercase tracking-[0.2em]">
+                Local Analysis Engine / Secure Mode
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+
+      <footer className="p-8 border-t border-zinc-800 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <p className="text-zinc-600 text-[10px] font-mono tracking-tight uppercase">MediaProbe Expert © 2024</p>
+          <div className="w-[1px] h-3 bg-zinc-800"></div>
+          <p className="text-zinc-600 text-[10px] font-mono tracking-tight uppercase">Precise Tech Spec Probe</p>
+        </div>
+        <p className="text-zinc-700 text-[10px] font-mono uppercase">Developed for high-end digital asset management</p>
+      </footer>
+    </div>
+  );
+};
+
+export default App;

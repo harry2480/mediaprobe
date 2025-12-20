@@ -1,0 +1,9 @@
+
+{
+  "name": "MediaProbe: 技術メタデータ抽出ツール",
+  "description": "動画、写真（JPG, PNG, WEBP, HEIF, TIFF）、音声ファイルからビットレート、解像度、チャンネル数などの技術的な詳細情報を抽出・表示します。",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
