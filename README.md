@@ -41,9 +41,24 @@ npm run build
 
 このリポジトリは GitHub Actions で自動デプロイが設定されています。
 
-1. **リポジトリ設定** (Settings > Pages) で Source を **"GitHub Actions"** に変更
-2. `main` ブランチに push すると自動的にビルド・デプロイされます
-3. デプロイ後、`https://[user].github.io/mediaprobe/` でアクセス可能
+#### 初回セットアップ
+
+1. GitHub リポジトリの **Settings > Pages** に移動
+2. **Source** を **"GitHub Actions"** に変更（デフォルトは "Deploy from a branch" の場合がある）
+3. Save を押す
+
+#### 自動デプロイ
+
+設定後、`main` ブランチに push すると：
+- GitHub Actions が自動的に `npm run build` を実行
+- ビルド成果物を GitHub Pages にデプロイ
+- `https://[user].github.io/mediaprobe/` でアクセス可能
+
+#### トラブルシューティング
+
+- **Actions タブでエラーを確認** — Settings > Actions で実行履歴を確認
+- **Pages 設定を確認** — Source が "GitHub Actions" になっているか再度確認
+- **キャッシュをクリア** — ブラウザの F5 リロードまたはシークレットウィンドウで確認
 
 ## 技術スタック
 
