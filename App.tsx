@@ -1,9 +1,9 @@
 
 import React, { useState, useCallback } from 'react';
-import { 
-  Upload, 
-  Settings, 
-  Activity, 
+import {
+  Upload,
+  Settings,
+  Activity,
   Zap,
   AlertCircle,
   Clock,
@@ -14,12 +14,19 @@ import {
   Database,
   ShieldCheck,
   Lock,
-  Music
+  Music,
+  Camera,
+  MapPin,
+  Palette,
+  FileImage,
+  Layers,
+  ImageOff
 } from 'lucide-react';
 import { AnalysisStatus } from './types.ts';
 import type { MediaMetadata } from './types.ts';
 import { extractMetadata, formatBytes, formatDuration } from './utils/mediaProcessor.ts';
 import InfoGrid from './components/InfoGrid.tsx';
+import MetadataSection from './components/MetadataSection.tsx';
 
 const App: React.FC = () => {
   const [metadata, setMetadata] = useState<MediaMetadata | null>(null);
@@ -58,6 +65,92 @@ const App: React.FC = () => {
   };
 
   const formatBitrate = (bps?: number) => bps ? `${(bps / 1000).toFixed(2)} kbps` : 'N/A';
+
+  const formatAperture = (f?: number) => f !== undefined ? `f/${f}` : undefined;
+  const formatExposure = (s?: number): string | undefined => {
+    if (s === undefined) return undefined;
+    if (s >= 1) return `${s}s`;
+    return `1/${Math.round(1 / s)}s`;
+  };
+  const formatFocalLength = (mm?: number) => mm !== undefined ? `${mm} mm` : undefined;
+  const formatMatrix = (m?: number[]) => m?.map(v => v.toFixed(4)).join(', ');
+  const formatOrientation = (o?: number): string | undefined => {
+    const map: Record<number, string> = {
+      1: 'Normal', 2: 'Flipped H', 3: 'Rotated 180°', 4: 'Flipped V',
+      6: 'Rotated 90° CW', 8: 'Rotated 90° CCW',
+    };
+    return o !== undefined ? (map[o] ?? String(o)) : undefined;
+  };
+  const formatWhiteBalance = (wb?: number | string): string | undefined => {
+    if (wb === undefined) return undefined;
+    if (typeof wb === 'string') return wb;
+    return wb === 0 ? 'Auto' : wb === 1 ? 'Manual' : String(wb);
+  };
+  const formatFlash = (f?: number | string): string | undefined => {
+    if (f === undefined) return undefined;
+    if (typeof f === 'string') return f;
+    return (f & 0x1) ? '発光' : '発光なし';
+  };
+  const formatGpsCoord = (deg?: number, isLat?: boolean): string | undefined => {
+    if (deg === undefined) return undefined;
+    const abs = Math.abs(deg);
+    const d = Math.floor(abs);
+    const m = Math.floor((abs - d) * 60);
+    const s = ((abs - d - m / 60) * 3600).toFixed(1);
+    const dir = isLat ? (deg >= 0 ? 'N' : 'S') : (deg >= 0 ? 'E' : 'W');
+    return `${d}° ${m}' ${s}" ${dir}`;
+  };
+  const formatExposureProgram = (ep?: number | string): string | undefined => {
+    if (ep === undefined) return undefined;
+    const map: Record<number | string, string> = {
+      0: 'Not defined', 1: 'Manual', 2: 'Program AE', 3: 'Aperture Priority',
+      4: 'Shutter Priority', 5: 'Creative (Slow Speed)', 6: 'Action (High Speed)',
+      7: 'Portrait', 8: 'Landscape',
+    };
+    return typeof ep === 'string' ? ep : (map[ep] ?? String(ep));
+  };
+  const formatIlluminant = (il?: number): string | undefined => {
+    if (il === undefined) return undefined;
+    const map: Record<number, string> = {
+      0: 'Unknown', 1: 'Daylight', 2: 'Fluorescent', 3: 'Tungsten',
+      4: 'Flash', 9: 'Fine weather', 10: 'Cloudy weather', 11: 'Shade',
+      12: 'Daylight fluorescent', 13: 'Day white fluorescent', 14: 'Cool white fluorescent',
+      15: 'White fluorescent', 17: 'Standard light A', 18: 'Standard light B',
+      19: 'Standard light C', 20: 'D55', 21: 'D65', 22: 'D75', 23: 'D50',
+      24: 'ISO studio tungsten',
+    };
+    return map[il] ?? String(il);
+  };
+  const formatCompression = (c?: number | string): string | undefined => {
+    if (c === undefined) return undefined;
+    const map: Record<number | string, string> = {
+      1: 'Uncompressed', 2: 'CCITT 1D', 3: 'T4/Group 3 Fax',
+      4: 'T6/Group 4 Fax', 5: 'LZW', 6: 'JPEG', 7: 'JPEG (Old)',
+      8: 'Deflate', 32773: 'PackBits', 32809: 'Thunderscan',
+    };
+    return typeof c === 'string' ? c : (map[c] ?? String(c));
+  };
+  const formatPhotometricInterpretation = (pi?: number | string): string | undefined => {
+    if (pi === undefined) return undefined;
+    const map: Record<number | string, string> = {
+      0: 'WhiteIsZero', 1: 'BlackIsZero', 2: 'RGB', 3: 'Palette color',
+      4: 'Transparency mask', 5: 'CMYK', 6: 'YCbCr', 8: 'CIELab',
+      9: 'ICCLab', 10: 'ITULab', 32803: 'CFA (Bayer)',
+    };
+    return typeof pi === 'string' ? pi : (map[pi] ?? String(pi));
+  };
+  const formatResUnit = (u?: number): string | undefined =>
+    ({ 1: 'None', 2: 'inch', 3: 'cm' })[u ?? 0] ?? undefined;
+  const formatCustomRendering = (cr?: number | string): string | undefined => {
+    if (cr === undefined) return undefined;
+    const map: Record<number | string, string> = { 0: 'Normal', 1: 'Custom' };
+    return typeof cr === 'string' ? cr : (map[cr] ?? String(cr));
+  };
+  const formatNoiseReduction = (nr?: number): string | undefined => {
+    if (nr === undefined) return undefined;
+    const map: Record<number, string> = { 0: 'Off', 1: 'On' };
+    return map[nr] ?? String(nr);
+  };
 
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans selection:bg-blue-500/30">
@@ -141,10 +234,16 @@ const App: React.FC = () => {
             <div className="grid lg:grid-cols-12 gap-8 items-stretch">
               {/* Preview Box */}
               <div className="lg:col-span-5 bg-zinc-900 rounded-[2rem] border border-zinc-800 overflow-hidden relative shadow-2xl">
-                {metadata.mimeType.startsWith('image/') ? (
+                {metadata.mimeType.startsWith('image/') && !metadata.fileName.toLowerCase().endsWith('.dng') ? (
                   <img src={metadata.previewUrl} alt="preview" className="w-full h-full object-contain bg-zinc-950 min-h-[300px]" />
                 ) : metadata.mimeType.startsWith('video/') ? (
                   <video src={metadata.previewUrl} className="w-full h-full object-contain bg-zinc-950 min-h-[300px]" controls muted />
+                ) : metadata.fileName.toLowerCase().endsWith('.dng') || metadata.fileName.match(/\.(cr2|cr3|arw|nef|nrw|raf|rw2|orf|srw|x3f)$/i) ? (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-4 min-h-[300px]">
+                    <div className="w-24 h-24 bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500"><ImageOff size={40}/></div>
+                    <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">RAW形式</p>
+                    <p className="text-zinc-600 font-mono text-[10px]">ブラウザプレビュー未対応</p>
+                  </div>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-4 min-h-[300px]">
                     <div className="w-24 h-24 bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500"><Music size={40}/></div>
@@ -264,6 +363,113 @@ const App: React.FC = () => {
                 { label: 'サンプリング周波数', value: metadata.sampleRate ? `${(metadata.sampleRate / 1000).toFixed(1)} kHz` : 'N/A', icon: <Activity size={18}/> },
                 { label: 'チャンネル数', value: metadata.channels ? `${metadata.channels} ch` : 'N/A', icon: <Settings size={18}/> },
               ]} />
+            </section>
+
+            <section className="space-y-4">
+              <MetadataSection
+                title="カラー / プロファイル情報"
+                icon={<Palette size={14} />}
+                accentClass="bg-purple-500/10 text-purple-400"
+                items={[
+                  { label: '幅（ピクセル）', value: metadata.colorInfo?.width },
+                  { label: '高さ（ピクセル）', value: metadata.colorInfo?.height },
+                  { label: 'カラーモデル', value: metadata.colorInfo?.colorModel },
+                  { label: 'カラースペース', value: metadata.colorInfo?.colorSpace },
+                  { label: 'プロファイル名', value: metadata.colorInfo?.profileName },
+                  { label: 'ビット深度', value: metadata.colorInfo?.bitDepth !== undefined ? `${metadata.colorInfo.bitDepth} bit` : undefined },
+                  { label: '方向', value: formatOrientation(metadata.colorInfo?.orientation) },
+                ]}
+              />
+
+              <MetadataSection
+                title="EXIF カメラ情報"
+                icon={<Camera size={14} />}
+                accentClass="bg-blue-500/10 text-blue-400"
+                items={[
+                  { label: '絞り値', value: formatAperture(metadata.exif?.aperture) },
+                  { label: 'Fナンバー', value: metadata.exif?.aperture !== undefined ? metadata.exif.aperture.toFixed(1) : undefined },
+                  { label: '輝度値', value: metadata.exif?.brightness !== undefined ? metadata.exif.brightness.toFixed(2) : undefined },
+                  { label: 'カスタムレンダリング', value: formatCustomRendering(metadata.exif?.customRendering) },
+                  { label: 'デジタル化日時', value: metadata.exif?.dateTimeDigitized },
+                  { label: 'オリジナル作成日時', value: metadata.exif?.dateTimeOriginal },
+                  { label: 'Exifバージョン', value: metadata.exif?.exifVersion },
+                  { label: '露出補正値', value: metadata.exif?.exposureCompensation !== undefined ? metadata.exif.exposureCompensation.toFixed(2) : undefined },
+                  { label: '露出モード', value: formatExposureProgram(metadata.exif?.exposureProgram) },
+                  { label: '露出プログラム', value: formatExposureProgram(metadata.exif?.exposureProgram) },
+                  { label: '露出時間', value: formatExposure(metadata.exif?.exposureTime) },
+                  { label: 'フラッシュ', value: formatFlash(metadata.exif?.flash) },
+                  { label: '焦点距離', value: formatFocalLength(metadata.exif?.focalLength) },
+                  { label: '35mm換算レンズ焦点距離', value: formatFocalLength(metadata.exif?.focalLength35) },
+                  { label: 'ISO感度', value: metadata.exif?.iso },
+                  { label: 'レンズ製造元', value: metadata.exif?.lensMake },
+                  { label: 'レンズ名', value: metadata.exif?.lensModel },
+                  { label: 'シャッタースピード', value: formatExposure(metadata.exif?.shutterSpeed) },
+                  { label: '被写体領域', value: metadata.exif?.subjectArea?.join(', ') },
+                  { label: 'ホワイトバランス', value: formatWhiteBalance(metadata.exif?.whiteBalance) },
+                  { label: 'カメラメーカー', value: metadata.exif?.make },
+                  { label: 'カメラモデル', value: metadata.exif?.model },
+                  { label: '測光モード', value: metadata.exif?.meteringMode !== undefined ? String(metadata.exif.meteringMode) : undefined },
+                  { label: 'ソフトウェア', value: metadata.exif?.software },
+                ]}
+              />
+
+              <MetadataSection
+                title="GPS 位置情報"
+                icon={<MapPin size={14} />}
+                accentClass="bg-green-500/10 text-green-400"
+                items={[
+                  { label: '高度', value: metadata.gps?.altitude !== undefined ? `${metadata.gps.altitude.toFixed(1)} m` : undefined },
+                  { label: '高度の基準', value: metadata.gps?.altitudeRef === 0 ? '海抜上' : metadata.gps?.altitudeRef === 1 ? '海抜下' : undefined },
+                  { label: 'GPS日付', value: metadata.gps?.gpsDateStamp },
+                  { label: '目的地の方向', value: metadata.gps?.destDirection !== undefined ? `${metadata.gps.destDirection.toFixed(1)}°` : undefined },
+                  { label: '目的地の方向の単位', value: metadata.gps?.destDirectionRef },
+                  { label: '画像の方向', value: metadata.gps?.imgDirection !== undefined ? `${metadata.gps.imgDirection.toFixed(1)}°` : undefined },
+                  { label: '画像の方向の単位', value: metadata.gps?.imgDirectionRef },
+                  { label: '緯度', value: formatGpsCoord(metadata.gps?.latitude, true) },
+                  { label: '経度', value: formatGpsCoord(metadata.gps?.longitude, false) },
+                  { label: '速度', value: metadata.gps?.speed !== undefined ? metadata.gps.speed.toFixed(2) : undefined },
+                  { label: '速度の単位', value: metadata.gps?.speedRef },
+                  { label: 'GPS時刻', value: metadata.gps?.gpsTimeStamp },
+                ]}
+              />
+
+              <MetadataSection
+                title="TIFF / 画像仕様"
+                icon={<FileImage size={14} />}
+                accentClass="bg-amber-500/10 text-amber-400"
+                items={[
+                  { label: '圧縮の種類', value: formatCompression(metadata.tiff?.compression) },
+                  { label: '日時', value: metadata.tiff?.dateTime },
+                  { label: '製造元', value: metadata.tiff?.make },
+                  { label: '機種名', value: metadata.tiff?.model },
+                  { label: '画素構成', value: formatPhotometricInterpretation(metadata.tiff?.photometricInterpretation) },
+                  { label: '使用ソフトウェア名', value: metadata.tiff?.software },
+                ]}
+              />
+
+              <MetadataSection
+                title="DNG / RAW プロファイル"
+                icon={<Layers size={14} />}
+                accentClass="bg-rose-500/10 text-rose-400"
+                items={[
+                  { label: 'AnalogBalance', value: formatMatrix(metadata.dng?.analogBalance) },
+                  { label: 'AsShotNeutral', value: formatMatrix(metadata.dng?.asShotNeutral) },
+                  { label: 'BaselineExposure', value: metadata.dng?.baselineExposure !== undefined ? metadata.dng.baselineExposure.toFixed(4) : undefined },
+                  { label: 'BaselineSharpness', value: metadata.dng?.baselineSharpness !== undefined ? metadata.dng.baselineSharpness.toFixed(4) : undefined },
+                  { label: 'BlackLevel', value: Array.isArray(metadata.dng?.blackLevel) ? (metadata.dng.blackLevel as number[]).join(', ') : metadata.dng?.blackLevel !== undefined ? String(metadata.dng.blackLevel) : undefined },
+                  { label: 'CalibrationIlluminant1', value: formatIlluminant(metadata.dng?.calibrationIlluminant1) },
+                  { label: 'CalibrationIlluminant2', value: formatIlluminant(metadata.dng?.calibrationIlluminant2) },
+                  { label: 'ColorMatrix1', value: formatMatrix(metadata.dng?.colorMatrix1) },
+                  { label: 'ColorMatrix2', value: formatMatrix(metadata.dng?.colorMatrix2) },
+                  { label: 'DefaultBlackRender', value: metadata.dng?.defaultBlackRender !== undefined ? String(metadata.dng.defaultBlackRender) : undefined },
+                  { label: 'DNG出力バージョン', value: metadata.dng?.dngOutVersion },
+                  { label: 'DNGバージョン', value: Array.isArray(metadata.dng?.dngVersion) ? (metadata.dng.dngVersion as number[]).join('.') : metadata.dng?.dngVersion !== undefined ? String(metadata.dng.dngVersion) : undefined },
+                  { label: 'NoiseProfile', value: Array.isArray(metadata.dng?.noiseProfile) ? `[${(metadata.dng.noiseProfile as number[]).length} values]` : undefined },
+                  { label: 'NoiseReductionApplied', value: formatNoiseReduction(metadata.dng?.noiseReductionApplied) },
+                  { label: 'WhiteLevel', value: metadata.dng?.whiteLevel },
+                  { label: 'カメラの固有名称', value: metadata.dng?.uniqueCameraModel },
+                ]}
+              />
             </section>
 
             <div className="bg-zinc-900/40 border border-zinc-800 p-6 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6">
