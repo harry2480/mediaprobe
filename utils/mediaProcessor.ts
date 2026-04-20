@@ -133,7 +133,7 @@ function mapExifOutput(raw: any, imgWidth?: number, imgHeight?: number): {
     uniqueCameraModel: e.UniqueCameraModel,
   };
 
-  const hasTiff = imgWidth !== undefined || imgHeight !== undefined || hasAnyValue(tiff);
+  const hasTiff = hasAnyValue(tiff);
   return {
     colorInfo: (imgWidth !== undefined || imgHeight !== undefined || hasAnyValue(colorInfo)) ? colorInfo : undefined,
     exif: hasAnyValue(exif) ? exif : undefined,
@@ -151,7 +151,7 @@ async function extractExifMetadata(file: File, imgWidth?: number, imgHeight?: nu
       tiff: true, exif: true, gps: true,
       icc: true, xmp: true,
       ifd1: false, iptc: false, jfif: false, ihdr: false,
-      mergeOutput: false,
+      mergeOutput: true,
     });
     return mapExifOutput(raw, imgWidth, imgHeight);
   } catch {
