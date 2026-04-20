@@ -394,7 +394,6 @@ const App: React.FC = () => {
                   { label: 'オリジナル作成日時', value: metadata.exif?.dateTimeOriginal },
                   { label: 'Exifバージョン', value: metadata.exif?.exifVersion },
                   { label: '露出補正値', value: metadata.exif?.exposureCompensation !== undefined ? metadata.exif.exposureCompensation.toFixed(2) : undefined },
-                  { label: '露出モード', value: formatExposureProgram(metadata.exif?.exposureProgram) },
                   { label: '露出プログラム', value: formatExposureProgram(metadata.exif?.exposureProgram) },
                   { label: '露出時間', value: formatExposure(metadata.exif?.exposureTime) },
                   { label: 'フラッシュ', value: formatFlash(metadata.exif?.flash) },

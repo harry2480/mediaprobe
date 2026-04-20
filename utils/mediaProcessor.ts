@@ -2,6 +2,9 @@
 import exifr from 'exifr';
 import { MediaMetadata, PrintSize, ColorInfo, ExifInfo, GpsInfo, TiffInfo, DngInfo } from "../types.ts";
 
+/**
+ * Get standard video resolution label from dimensions
+ */
 const getStandardLabel = (w: number, h: number): string | undefined => {
   const pixels = w * h;
   if (w >= 7680 || h >= 4320) return "8K UHD";
@@ -13,6 +16,9 @@ const getStandardLabel = (w: number, h: number): string | undefined => {
   return undefined;
 };
 
+/**
+ * Calculate print sizes in centimeters for standard DPI values
+ */
 const calculatePrintSizes = (w: number, h: number): PrintSize[] => {
   const dpis = [72, 300];
   return dpis.map(dpi => ({
@@ -22,28 +28,43 @@ const calculatePrintSizes = (w: number, h: number): PrintSize[] => {
   }));
 };
 
+/**
+ * Detect if file is an image based on MIME type or extension
+ */
 const isImageFile = (file: File): boolean => {
   if (file.type.startsWith('image/')) return true;
   const ext = file.name.split('.').pop()?.toLowerCase();
   return ['jpg', 'jpeg', 'png', 'webp', 'tiff', 'tif', 'heif', 'heic', 'avif', 'dng', 'cr2', 'cr3', 'arw', 'nef', 'nrw', 'raf', 'rw2', 'orf', 'srw', 'x3f'].includes(ext || '');
 };
 
+/**
+ * Detect if file is a video based on MIME type or extension
+ */
 const isVideoFile = (file: File): boolean => {
   if (file.type.startsWith('video/')) return true;
   const ext = file.name.split('.').pop()?.toLowerCase();
   return ['mp4', 'mov', 'webm', 'mkv', 'avi'].includes(ext || '');
 };
 
+/**
+ * Detect if file is audio based on MIME type or extension
+ */
 const isAudioFile = (file: File): boolean => {
   if (file.type.startsWith('audio/')) return true;
   const ext = file.name.split('.').pop()?.toLowerCase();
   return ['mp3', 'wav', 'ogg', 'm4a', 'flac'].includes(ext || '');
 };
 
-function hasAnyValue(obj: object): boolean {
+/**
+ * Check if object has any non-null, non-undefined values
+ */
+function hasAnyValue(obj: Record<string, unknown>): boolean {
   return Object.values(obj).some(v => v !== undefined && v !== null);
 }
 
+/**
+ * Map raw EXIF data to structured metadata objects
+ */
 function mapExifOutput(raw: any, imgWidth?: number, imgHeight?: number): {
   colorInfo?: ColorInfo; exif?: ExifInfo; gps?: GpsInfo; tiff?: TiffInfo; dng?: DngInfo;
 } {
@@ -143,6 +164,9 @@ function mapExifOutput(raw: any, imgWidth?: number, imgHeight?: number): {
   };
 }
 
+/**
+ * Extract EXIF and metadata information from image file
+ */
 async function extractExifMetadata(file: File, imgWidth?: number, imgHeight?: number): Promise<{
   colorInfo?: ColorInfo; exif?: ExifInfo; gps?: GpsInfo; tiff?: TiffInfo; dng?: DngInfo;
 }> {
@@ -159,6 +183,9 @@ async function extractExifMetadata(file: File, imgWidth?: number, imgHeight?: nu
   }
 }
 
+/**
+ * Extract audio properties by decoding audio data
+ */
 async function probeAudioMetadata(file: File): Promise<{ sampleRate?: number; channels?: number }> {
   try {
     const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -179,6 +206,9 @@ async function probeAudioMetadata(file: File): Promise<{ sampleRate?: number; ch
   }
 }
 
+/**
+ * Main entry point to extract all media metadata based on file type
+ */
 export const extractMetadata = async (file: File): Promise<MediaMetadata> => {
   const baseMetadata: MediaMetadata = {
     fileName: file.name,
@@ -268,6 +298,9 @@ export const extractMetadata = async (file: File): Promise<MediaMetadata> => {
   return baseMetadata;
 };
 
+/**
+ * Format bytes to human-readable string (KB, MB, GB, etc.)
+ */
 export const formatBytes = (bytes: number, decimals = 2) => {
   if (bytes === 0 || !bytes) return '0 Bytes';
   const k = 1024;
@@ -277,6 +310,9 @@ export const formatBytes = (bytes: number, decimals = 2) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
 
+/**
+ * Format seconds to HH:MM:SS or MM:SS time format
+ */
 export const formatDuration = (seconds: number) => {
   if (!seconds || isNaN(seconds) || !isFinite(seconds)) return '00:00';
   const h = Math.floor(seconds / 3600);
