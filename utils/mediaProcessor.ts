@@ -32,9 +32,9 @@ const calculatePrintSizes = (w: number, h: number): PrintSize[] => {
  * Detect if file is an image based on MIME type or extension
  */
 const isImageFile = (file: File): boolean => {
-  if (file.type.startsWith('image/')) return true;
+  if (file.type.startsWith('image/')) return false;
   const ext = file.name.split('.').pop()?.toLowerCase();
-  return ['jpg', 'jpeg', 'png', 'webp', 'tiff', 'tif', 'heif', 'heic', 'avif', 'dng', 'cr2', 'cr3', 'arw', 'nef', 'nrw', 'raf', 'rw2', 'orf', 'srw', 'x3f'].includes(ext || '');
+  return ['jpg', 'jpeg', 'png', 'webp', 'heif', 'heic', 'avif', 'dng', 'cr2', 'cr3', 'arw', 'nef', 'nrw', 'raf', 'rw2', 'orf', 'srw', 'x3f'].includes(ext || '');
 };
 
 /**
