@@ -49,14 +49,12 @@ function mapExifOutput(raw: any, imgWidth?: number, imgHeight?: number): {
 } {
   if (!raw) return {};
   const e = raw;
-  const icc = raw.icc ?? {};
-  const xmp = raw.xmp ?? {};
 
   const colorInfo: ColorInfo = {
-    colorModel: icc.ColorSpaceData ?? xmp.ColorMode,
-    colorSpace: icc.ProfileDescription ?? (e.ColorSpace === 1 ? 'sRGB' : e.ColorSpace != null ? String(e.ColorSpace) : undefined),
-    profileName: icc.ProfileDescription,
-    bitDepth: e.BitsPerSample ?? xmp.BitsPerSample,
+    colorModel: raw.ColorSpaceData ?? raw.ColorMode,
+    colorSpace: raw.ProfileDescription ?? (e.ColorSpace === 1 ? 'sRGB' : e.ColorSpace != null ? String(e.ColorSpace) : undefined),
+    profileName: raw.ProfileDescription,
+    bitDepth: e.BitsPerSample,
     width: imgWidth,
     height: imgHeight,
     orientation: e.Orientation,
