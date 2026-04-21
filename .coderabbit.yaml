@@ -4,22 +4,20 @@
 language: ja
 
 reviews:
-  request_review: author
   auto_review:
     enabled: true
-  auto_review_on_fork: false
   review_status: true
   path_filters:
-    - !src/**/*.{ts,tsx,js,jsx}
-    - !wasm-processor/src/**/*.rs
-    - !package.json
-    - !.github/**/*.yml
-    - node_modules/**
-    - dist/**
-    - build/**
-    - .git/**
-    - wasm-processor/target/**
-    - "*.lock"
+    - src/**/*.{ts,tsx,js,jsx}
+    - wasm-processor/src/**/*.rs
+    - package.json
+    - .github/**/*.yml
+    - "!node_modules/**"
+    - "!dist/**"
+    - "!build/**"
+    - "!.git/**"
+    - "!wasm-processor/target/**"
+    - "!*.lock"
 
 chat:
   auto_reply: true
