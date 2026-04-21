@@ -50,6 +50,7 @@ npm run build
 #### 自動デプロイ
 
 設定後、`main` ブランチに push すると：
+
 - GitHub Actions が自動的に `npm run build` を実行
 - ビルド成果物を GitHub Pages にデプロイ
 - `https://[user].github.io/mediaprobe/` でアクセス可能
