@@ -8,6 +8,7 @@ export const RawDataViewer: React.FC<Props> = ({ file }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const disposedRef = useRef(false);
 
   // Gamma adjustment logic
   const [gamma, setGamma] = useState(1.0);
@@ -17,6 +18,9 @@ export const RawDataViewer: React.FC<Props> = ({ file }) => {
   useEffect(() => {
     if (!file) return;
 
+    disposedRef.current = false;
+    let worker: Worker | null = null;
+
     const processFile = async () => {
       setLoading(true);
       setError(null);
@@ -25,9 +29,11 @@ export const RawDataViewer: React.FC<Props> = ({ file }) => {
         const buffer = await file.arrayBuffer();
 
         // Use a web worker to parse raw data using WASM
-        const worker = new Worker(new URL('../workers/rawWorker.ts', import.meta.url), { type: 'module' });
-        
+        worker = new Worker(new URL('../workers/rawWorker.ts', import.meta.url), { type: 'module' });
+
         worker.onmessage = (e) => {
+          if (disposedRef.current) return;
+
           if (e.data.success) {
             originalPixels.current = e.data.pixels;
             imageDim.current = { width: e.data.width, height: e.data.height };
@@ -36,24 +42,32 @@ export const RawDataViewer: React.FC<Props> = ({ file }) => {
             setError(e.data.error || 'Failed to process RAW data.');
           }
           setLoading(false);
-          worker.terminate();
         };
 
         worker.onerror = (e) => {
+          if (disposedRef.current) return;
           setError('Worker error: ' + e.message);
           setLoading(false);
-          worker.terminate();
         };
 
-        // Send binary data to the worker
-        worker.postMessage({ buffer });
+        // Send binary data to the worker with Transferable buffer
+        worker.postMessage({ buffer }, [buffer]);
       } catch (err: any) {
+        if (disposedRef.current) return;
         setError('Error reading file: ' + err.message);
         setLoading(false);
       }
     };
 
     processFile();
+
+    // Cleanup on unmount or file change
+    return () => {
+      disposedRef.current = true;
+      if (worker) {
+        worker.terminate();
+      }
+    };
   }, [file]);
 
   const renderCanvas = (pixels: Uint8Array, width: number, height: number, currentGamma: number) => {

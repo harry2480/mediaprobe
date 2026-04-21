@@ -7,12 +7,12 @@ edition = "2021"
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-wasm-bindgen = "0.2.92"
-js-sys = "0.3.69"
-web-sys = { version = "0.3.69", features = ["console"] }
+wasm-bindgen = "0.2.93"
+js-sys = "0.3.71"
+web-sys = { version = "0.3.71", features = ["console"] }
 console_error_panic_hook = "0.1.7"
-# Note: For real RAW decoding, crates like `rawler` or `image` would be added here.
-# For this example, we'll parse dummy binary or simple unpacking to show the architecture.
+rawler = { version = "0.4", features = ["embedded"] }
+image = "0.25"
 
 [dev-dependencies]
-wasm-bindgen-test = "0.3.38"
+wasm-bindgen-test = "0.3.42"
