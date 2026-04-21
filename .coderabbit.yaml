@@ -5,31 +5,21 @@ language: ja
 
 reviews:
   request_review: author
-  auto_review: true
+  auto_review:
+    enabled: true
   auto_review_on_fork: false
-  review_status: requested
+  review_status: true
+  path_filters:
+    - !src/**/*.{ts,tsx,js,jsx}
+    - !wasm-processor/src/**/*.rs
+    - !package.json
+    - !.github/**/*.yml
+    - node_modules/**
+    - dist/**
+    - build/**
+    - .git/**
+    - wasm-processor/target/**
+    - "*.lock"
 
 chat:
   auto_reply: true
-
-# CodeRabbitに日本語でコードレビューを実施させるための設定
-settings:
-  max_files_to_review: 50
-  max_lines_per_review: 500
-  enable_file_filters: true
-
-# ファイルの除外設定
-exclude_patterns:
-  - "node_modules/**"
-  - "dist/**"
-  - "build/**"
-  - ".git/**"
-  - "wasm-processor/target/**"
-  - "*.lock"
-
-# レビュー対象ファイル
-include_patterns:
-  - "src/**/*.{ts,tsx,js,jsx}"
-  - "wasm-processor/src/**/*.rs"
-  - "package.json"
-  - ".github/**/*.yml"
