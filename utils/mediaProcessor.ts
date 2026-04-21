@@ -25,7 +25,7 @@ const calculatePrintSizes = (w: number, h: number): PrintSize[] => {
 const isImageFile = (file: File): boolean => {
   if (file.type.startsWith('image/')) return true;
   const ext = file.name.split('.').pop()?.toLowerCase();
-  return ['jpg', 'jpeg', 'png', 'webp', 'tiff', 'tif', 'heif', 'heic', 'avif', 'dng', 'cr2', 'cr3', 'arw', 'nef', 'nrw', 'raf', 'rw2', 'orf', 'srw', 'x3f'].includes(ext || '');
+  return ['jpg', 'jpeg', 'png', 'webp', 'tif', 'tiff', 'heif', 'heic', 'avif', 'dng', 'cr2', 'cr3', 'arw', 'nef', 'nrw', 'raf', 'rw2', 'orf', 'srw', 'x3f'].includes(ext || '');
 };
 
 const isVideoFile = (file: File): boolean => {
@@ -49,14 +49,12 @@ function mapExifOutput(raw: any, imgWidth?: number, imgHeight?: number): {
 } {
   if (!raw) return {};
   const e = raw;
-  const icc = raw.icc ?? {};
-  const xmp = raw.xmp ?? {};
 
   const colorInfo: ColorInfo = {
-    colorModel: icc.ColorSpaceData ?? xmp.ColorMode,
-    colorSpace: icc.ProfileDescription ?? (e.ColorSpace === 1 ? 'sRGB' : e.ColorSpace != null ? String(e.ColorSpace) : undefined),
-    profileName: icc.ProfileDescription,
-    bitDepth: e.BitsPerSample ?? xmp.BitsPerSample,
+    colorModel: raw.ColorSpaceData ?? raw.ColorMode,
+    colorSpace: raw.ProfileDescription ?? (e.ColorSpace === 1 ? 'sRGB' : e.ColorSpace != null ? String(e.ColorSpace) : undefined),
+    profileName: raw.ProfileDescription,
+    bitDepth: e.BitsPerSample,
     width: imgWidth,
     height: imgHeight,
     orientation: e.Orientation,
@@ -133,7 +131,7 @@ function mapExifOutput(raw: any, imgWidth?: number, imgHeight?: number): {
     uniqueCameraModel: e.UniqueCameraModel,
   };
 
-  const hasTiff = imgWidth !== undefined || imgHeight !== undefined || hasAnyValue(tiff);
+  const hasTiff = hasAnyValue(tiff);
   return {
     colorInfo: (imgWidth !== undefined || imgHeight !== undefined || hasAnyValue(colorInfo)) ? colorInfo : undefined,
     exif: hasAnyValue(exif) ? exif : undefined,
@@ -151,7 +149,7 @@ async function extractExifMetadata(file: File, imgWidth?: number, imgHeight?: nu
       tiff: true, exif: true, gps: true,
       icc: true, xmp: true,
       ifd1: false, iptc: false, jfif: false, ihdr: false,
-      mergeOutput: false,
+      mergeOutput: true,
     });
     return mapExifOutput(raw, imgWidth, imgHeight);
   } catch {

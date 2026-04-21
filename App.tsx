@@ -234,11 +234,11 @@ const App: React.FC = () => {
             <div className="grid lg:grid-cols-12 gap-8 items-stretch">
               {/* Preview Box */}
               <div className="lg:col-span-5 bg-zinc-900 rounded-[2rem] border border-zinc-800 overflow-hidden relative shadow-2xl">
-                {metadata.mimeType.startsWith('image/') && !metadata.fileName.toLowerCase().endsWith('.dng') ? (
+                {metadata.mimeType.startsWith('image/') && !/\.(dng|cr2|cr3|arw|nef|nrw|raf|rw2|orf|srw|x3f|tiff?)$/i.test(metadata.fileName) ? (
                   <img src={metadata.previewUrl} alt="preview" className="w-full h-full object-contain bg-zinc-950 min-h-[300px]" />
                 ) : metadata.mimeType.startsWith('video/') ? (
                   <video src={metadata.previewUrl} className="w-full h-full object-contain bg-zinc-950 min-h-[300px]" controls muted />
-                ) : metadata.fileName.toLowerCase().endsWith('.dng') || metadata.fileName.match(/\.(cr2|cr3|arw|nef|nrw|raf|rw2|orf|srw|x3f)$/i) ? (
+                ) : /\.(dng|cr2|cr3|arw|nef|nrw|raf|rw2|orf|srw|x3f|tiff?)$/i.test(metadata.fileName) ? (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-4 min-h-[300px]">
                     <div className="w-24 h-24 bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500"><ImageOff size={40}/></div>
                     <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">RAW形式</p>
@@ -403,7 +403,7 @@ const App: React.FC = () => {
                   { label: 'ISO感度', value: metadata.exif?.iso },
                   { label: 'レンズ製造元', value: metadata.exif?.lensMake },
                   { label: 'レンズ名', value: metadata.exif?.lensModel },
-                  { label: 'シャッタースピード', value: formatExposure(metadata.exif?.shutterSpeed) },
+                  { label: 'シャッタースピード', value: metadata.exif?.shutterSpeed !== undefined ? formatExposure(Math.pow(2, -metadata.exif.shutterSpeed)) : metadata.exif?.exposureTime !== undefined ? formatExposure(metadata.exif.exposureTime) : undefined },
                   { label: '被写体領域', value: metadata.exif?.subjectArea?.join(', ') },
                   { label: 'ホワイトバランス', value: formatWhiteBalance(metadata.exif?.whiteBalance) },
                   { label: 'カメラメーカー', value: metadata.exif?.make },
