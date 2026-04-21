@@ -19,11 +19,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Setup Rust & Wasm target
+        run: |
+          rustup target add wasm32-unknown-unknown
+          curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+          
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+          
       - run: npm ci
+      - run: cd wasm-processor && wasm-pack build --target web --release
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
