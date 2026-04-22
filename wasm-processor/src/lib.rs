@@ -160,7 +160,8 @@ pub fn get_height() -> u32 {
     IMAGE_DIMENSIONS.with(|dims| dims.borrow().1)
 }
 
-// DNG で LJPEG 精度10を使用しているかをチェック
+// DNG で LJPEG を使用しているかをチェック
+// rawloader は精度8-16に対応しているため、その範囲外のみ未対応と判定
 fn is_unsupported_ljpeg_dng(data: &[u8]) -> bool {
     if data.len() < 5 {
         return false;
@@ -175,13 +176,14 @@ fn is_unsupported_ljpeg_dng(data: &[u8]) -> bool {
     }
 
     // JPEG Lossless (LJPEG) の SOF3 マーカー (0xFFC3) を検出
-    // DNG内に埋め込まれたJPEGストリーム内の SOF3 の sample precision を確認
-    // SOF3 マーカー直後: [0xFF, 0xC3, Lh, Ll, P, ...]
-    // P (5バイト目) = sample precision （精度10なら 0x0A）
+    // rawloader で対応できない精度（8未満、または16より大きい）のみ未対応と判定
     for window in data.windows(5) {
-        if window[0] == 0xFF && window[1] == 0xC3 && window[4] == 10 {
-            // SOF3 + precision 10 検出
-            return true;
+        if window[0] == 0xFF && window[1] == 0xC3 {
+            let precision = window[4];
+            // 精度が8-16の範囲外なら未対応
+            if precision < 8 || precision > 16 {
+                return true;
+            }
         }
     }
 
