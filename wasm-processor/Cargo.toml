@@ -15,3 +15,6 @@ rawloader = "0.37"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.42"
+
+[profile.release]
+panic = "unwind"

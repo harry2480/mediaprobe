@@ -71,14 +71,20 @@ export const RawDataViewer: React.FC<Props> = ({ file }) => {
             imageDim.current = { width: e.data.width, height: e.data.height };
             renderCanvas(e.data.pixels, e.data.width, e.data.height, gamma);
           } else {
-            setError(e.data.error || 'Failed to process RAW data.');
+            console.error('WASM Worker error details:', e.data.error);
+            setError(
+              e.data.error.includes("LJPEG") || e.data.error.includes("panicked")
+                ? 'このRAWファイル（10-bit DNG等）のリニア現像には未対応です。簡易プレビューのみを表示しています。'
+                : e.data.error || 'Failed to process RAW data.'
+            );
           }
           setLoading(false);
         };
 
         worker.onerror = (e) => {
           if (disposedRef.current) return;
-          setError('Worker error: ' + e.message);
+          console.error('Worker throw an uncaught exception:', e.message);
+          setError('このファイル形式の処理中にエラーが発生しました。現像未対応の可能性があります。簡易プレビューのみを表示します。');
           setLoading(false);
         };
 
@@ -149,18 +155,20 @@ export const RawDataViewer: React.FC<Props> = ({ file }) => {
   return (
     <div className="flex flex-col space-y-4">
       <h3 className="text-xl font-bold">RAW Preview & Analysis</h3>
+
+      {error && <div className="p-4 border-l-4 border-yellow-500 bg-yellow-50 text-yellow-700">{error}</div>}
       
-      {/* Fast JPEG Preview Section */}
-      {loading && previewUrl && (
+      {/* Fast JPEG Preview Section (Fallback or Loading) */}
+      {(loading || error) && previewUrl && (
         <div className="flex flex-col items-center p-4 border rounded bg-gray-50">
-          <p className="text-sm text-gray-500 mb-2">Fast EXIF Preview</p>
+          <p className="text-sm text-gray-500 mb-2">Exif Preview</p>
           <img src={previewUrl} alt="RAW Fast Preview" className="max-w-full h-auto shadow-sm" />
-          <p className="text-blue-500 animate-pulse mt-4">Processing full RAW data in WebAssembly...</p>
+          {loading && <p className="text-blue-500 animate-pulse mt-4">Processing full RAW data in WebAssembly...</p>}
         </div>
       )}
 
       {loading && !previewUrl && <p className="text-blue-500 animate-pulse">Processing RAW data in WebAssembly...</p>}
-      {error && <p className="text-red-500">Error: {error}</p>}
+      {error && !previewUrl && <p className="text-red-500">表示できるプレビューがありません。</p>}
       
       {/* Linear Array Display Section (WASM output) */}
       {!loading && !error && originalPixels.current && (
