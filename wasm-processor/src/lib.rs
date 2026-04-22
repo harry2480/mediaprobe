@@ -23,53 +23,87 @@ pub fn process_raw_data(data: &[u8]) -> Result<js_sys::Uint8Array, JsValue> {
     let width = image.width as u32;
     let height = image.height as u32;
     
-    // IMAGE_DIMENSIONSに保存（JSからの取得用）
+    // サブサンプリング（間引き）によるメモリ最適化
+    // 最大表示解像度を1920px程度に制限し、WASMのOOMを回避する
+    const MAX_DIM: u32 = 1920;
+    // 切り上げ除算で step を算出し、new_width/new_height が MAX_DIM を超えないようにする
+    let step = std::cmp::max(
+        1,
+        std::cmp::max(
+            (width + MAX_DIM - 1) / MAX_DIM,
+            (height + MAX_DIM - 1) / MAX_DIM,
+        ),
+    );
+    
+    let new_width = width / step;
+    let new_height = height / step;
+    
+    // IMAGE_DIMENSIONSに保存（フロントのCanvas描画時のサイズとして使用）
     IMAGE_DIMENSIONS.with(|dims| {
-        *dims.borrow_mut() = (width, height);
+        *dims.borrow_mut() = (new_width, new_height);
     });
 
-    let mut pixels = vec![0u8; (width * height * 4) as usize];
+    // 縮小後の画素数分だけメモリを確保（巨大配列を避ける）
+    let mut pixels = vec![0u8; (new_width * new_height * 4) as usize];
     
     // 簡易的にRAWのリニアデータを描画にマッピング
     match image.data {
         rawloader::RawImageData::Integer(ref linear_data) => {
             // 正規化のための最大値を算出
             let mut max_val = 1u16;
-            let stride = std::cmp::max(1, linear_data.len() / 10000);
-            for &val in linear_data.iter().step_by(stride).take(10000) {
+            let sample_stride = std::cmp::max(1, linear_data.len() / 10000);
+            for &val in linear_data.iter().step_by(sample_stride).take(10000) {
                  if val > max_val { max_val = val; }
             }
             if max_val < 255 { max_val = 255; }
 
-            for i in 0..(width * height) as usize {
-                if i < linear_data.len() {
-                    let pixel_val = ((linear_data[i] as f32 / max_val as f32) * 255.0) as u8;
-                    let index = i * 4;
-                    pixels[index] = pixel_val;     // R
-                    pixels[index + 1] = pixel_val; // G
-                    pixels[index + 2] = pixel_val; // B
-                    pixels[index + 3] = 255;       // A
+            // 本番画像のピクセルをステップ幅で間引いて抽出
+            for y in 0..new_height {
+                for x in 0..new_width {
+                    let orig_x = x * step;
+                    let orig_y = y * step;
+                    let orig_idx = (orig_y * width + orig_x) as usize;
+                    
+                    if orig_idx < linear_data.len() {
+                        let val = linear_data[orig_idx] as f32;
+                        let pixel_val = ((val / max_val as f32) * 255.0).min(255.0) as u8;
+                        
+                        let dst_idx = (y * new_width + x) as usize * 4;
+                        pixels[dst_idx] = pixel_val;     // R
+                        pixels[dst_idx + 1] = pixel_val; // G
+                        pixels[dst_idx + 2] = pixel_val; // B
+                        pixels[dst_idx + 3] = 255;       // A
+                    }
                 }
             }
         }
         rawloader::RawImageData::Float(ref linear_data) => {
             // Float形式（一部のDNG等）の処理
             let mut max_val = 0.001f32;
-            let stride = std::cmp::max(1, linear_data.len() / 10000);
-            for &val in linear_data.iter().step_by(stride).take(10000) {
+            let sample_stride = std::cmp::max(1, linear_data.len() / 10000);
+            for &val in linear_data.iter().step_by(sample_stride).take(10000) {
                  if val > max_val { max_val = val; }
             }
             // Floatデータの場合、通常0.0-1.0に収まる事が多いので下限を1.0としておく
             if max_val < 1.0 { max_val = 1.0; }
 
-            for i in 0..(width * height) as usize {
-                if i < linear_data.len() {
-                    let pixel_val = ((linear_data[i] / max_val) * 255.0) as u8;
-                    let index = i * 4;
-                    pixels[index] = pixel_val;     // R
-                    pixels[index + 1] = pixel_val; // G
-                    pixels[index + 2] = pixel_val; // B
-                    pixels[index + 3] = 255;       // A
+            // 本番画像のピクセルをステップ幅で間引いて抽出
+            for y in 0..new_height {
+                for x in 0..new_width {
+                    let orig_x = x * step;
+                    let orig_y = y * step;
+                    let orig_idx = (orig_y * width + orig_x) as usize;
+                    
+                    if orig_idx < linear_data.len() {
+                        let val = linear_data[orig_idx];
+                        let pixel_val = ((val / max_val) * 255.0).min(255.0) as u8;
+                        
+                        let dst_idx = (y * new_width + x) as usize * 4;
+                        pixels[dst_idx] = pixel_val;     // R
+                        pixels[dst_idx + 1] = pixel_val; // G
+                        pixels[dst_idx + 2] = pixel_val; // B
+                        pixels[dst_idx + 3] = 255;       // A
+                    }
                 }
             }
         }
