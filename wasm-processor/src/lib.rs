@@ -35,7 +35,8 @@ pub fn process_raw_data(data: &[u8]) -> Result<js_sys::Uint8Array, JsValue> {
         rawloader::RawImageData::Integer(ref linear_data) => {
             // 正規化のための最大値を算出
             let mut max_val = 1u16;
-            for &val in linear_data.iter().take(10000) {
+            let stride = std::cmp::max(1, linear_data.len() / 10000);
+            for &val in linear_data.iter().step_by(stride).take(10000) {
                  if val > max_val { max_val = val; }
             }
             if max_val < 255 { max_val = 255; }
@@ -54,7 +55,8 @@ pub fn process_raw_data(data: &[u8]) -> Result<js_sys::Uint8Array, JsValue> {
         rawloader::RawImageData::Float(ref linear_data) => {
             // Float形式（一部のDNG等）の処理
             let mut max_val = 0.001f32;
-            for &val in linear_data.iter().take(10000) {
+            let stride = std::cmp::max(1, linear_data.len() / 10000);
+            for &val in linear_data.iter().step_by(stride).take(10000) {
                  if val > max_val { max_val = val; }
             }
             // Floatデータの場合、通常0.0-1.0に収まる事が多いので下限を1.0としておく
