@@ -18,3 +18,9 @@ wasm-bindgen-test = "0.3.42"
 
 [profile.release]
 panic = "unwind"
+lto = true
+opt-level = "z"     # WASM バイナリサイズ最適化
+strip = true
+
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
