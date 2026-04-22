@@ -11,7 +11,7 @@ describe('RawDataViewer', () => {
   it('shows processing message when a file is provided', () => {
     const mockFile = new File(['dummy binary'], 'test.raw', { type: 'image/x-raw' });
     render(<RawDataViewer file={mockFile} />);
-    expect(screen.getByText(/RAW Linear Data Viewer/i)).not.toBeNull();
+    expect(screen.getByText(/RAW Preview & Analysis/i)).not.toBeNull();
     expect(screen.getByText(/Processing RAW data/i)).not.toBeNull();
   });
 });

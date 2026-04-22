@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
+import exifr from 'exifr';
 
 interface Props {
   file: File | null;
@@ -8,6 +9,7 @@ export const RawDataViewer: React.FC<Props> = ({ file }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const disposedRef = useRef(false);
 
   // Gamma adjustment logic
@@ -16,10 +18,40 @@ export const RawDataViewer: React.FC<Props> = ({ file }) => {
   const imageDim = useRef<{width: number, height: number} | null>(null);
 
   useEffect(() => {
-    if (!file) return;
+    if (!file) {
+      setPreviewUrl(null);
+      return;
+    }
 
     disposedRef.current = false;
     let worker: Worker | null = null;
+    
+    // Clear previous states
+    setPreviewUrl(null);
+    if (originalPixels.current) {
+        originalPixels.current = null;
+        imageDim.current = null;
+        if (canvasRef.current) {
+            const ctx = canvasRef.current.getContext('2d');
+            ctx?.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+        }
+    }
+
+    // Load fast JPEG preview using exifr
+    const extractPreview = async () => {
+      try {
+        const thumbnailBuffer = await exifr.thumbnail(file);
+        if (disposedRef.current) return;
+        if (thumbnailBuffer) {
+          const blob = new Blob([thumbnailBuffer], { type: 'image/jpeg' });
+          const url = URL.createObjectURL(blob);
+          setPreviewUrl(url);
+        }
+      } catch (err) {
+        console.warn('Failed to extract JPEG thumbnail:', err);
+      }
+    };
+    extractPreview();
 
     const processFile = async () => {
       setLoading(true);
@@ -67,6 +99,9 @@ export const RawDataViewer: React.FC<Props> = ({ file }) => {
       if (worker) {
         worker.terminate();
       }
+      if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+      }
     };
   }, [file]);
 
@@ -113,12 +148,24 @@ export const RawDataViewer: React.FC<Props> = ({ file }) => {
 
   return (
     <div className="flex flex-col space-y-4">
-      <h3 className="text-xl font-bold">RAW Linear Data Viewer (WASM)</h3>
-      {loading && <p className="text-blue-500 animate-pulse">Processing RAW data in WebAssembly...</p>}
+      <h3 className="text-xl font-bold">RAW Preview & Analysis</h3>
+      
+      {/* Fast JPEG Preview Section */}
+      {loading && previewUrl && (
+        <div className="flex flex-col items-center p-4 border rounded bg-gray-50">
+          <p className="text-sm text-gray-500 mb-2">Fast EXIF Preview</p>
+          <img src={previewUrl} alt="RAW Fast Preview" className="max-w-full h-auto shadow-sm" />
+          <p className="text-blue-500 animate-pulse mt-4">Processing full RAW data in WebAssembly...</p>
+        </div>
+      )}
+
+      {loading && !previewUrl && <p className="text-blue-500 animate-pulse">Processing RAW data in WebAssembly...</p>}
       {error && <p className="text-red-500">Error: {error}</p>}
       
-      {!loading && !error && (
+      {/* Linear Array Display Section (WASM output) */}
+      {!loading && !error && originalPixels.current && (
         <div className="flex flex-col items-center p-4 border rounded bg-gray-50">
+          <p className="text-sm text-gray-500 mb-2">Full RAW Data ({imageDim.current?.width}x{imageDim.current?.height})</p>
           <canvas ref={canvasRef} className="max-w-full h-auto shadow-md bg-transparent" />
           <div className="mt-4 flex flex-col w-full max-w-md">
             <label className="mb-2 font-medium">Gamma Correction: {gamma.toFixed(2)}</label>
