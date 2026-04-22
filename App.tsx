@@ -27,10 +27,11 @@ import type { MediaMetadata } from './types.ts';
 import { extractMetadata, formatBytes, formatDuration } from './utils/mediaProcessor.ts';
 import InfoGrid from './components/InfoGrid.tsx';
 import MetadataSection from './components/MetadataSection.tsx';
-import { RawDataViewer } from './components/RawDataViewer.tsx';
+import { RawDataViewer } from './src/components/RawDataViewer.tsx';
 
 const App: React.FC = () => {
   const [metadata, setMetadata] = useState<MediaMetadata | null>(null);
+  const [currentFile, setCurrentFile] = useState<File | null>(null);
   const [status, setStatus] = useState<AnalysisStatus>(AnalysisStatus.IDLE);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -38,6 +39,7 @@ const App: React.FC = () => {
   const processFile = async (selectedFile: File) => {
     setError(null);
     setMetadata(null);
+    setCurrentFile(selectedFile);
     setStatus(AnalysisStatus.EXTRACTING);
 
     try {
@@ -61,6 +63,7 @@ const App: React.FC = () => {
   const reset = () => {
     if (metadata?.previewUrl) URL.revokeObjectURL(metadata.previewUrl);
     setMetadata(null);
+    setCurrentFile(null);
     setStatus(AnalysisStatus.IDLE);
     setError(null);
   };
@@ -242,7 +245,7 @@ const App: React.FC = () => {
                 ) : /\.(dng|cr2|cr3|arw|nef|nrw|raf|rw2|orf|srw|x3f|tiff?)$/i.test(metadata.fileName) ? (
                   <div className="w-full h-full flex flex-col items-stretch justify-start min-h-[300px] bg-zinc-950/80 rounded-[2rem] overflow-hidden">
                     {/* ここで新しく作ったWASM対応のRawDataViewerを呼び出します */}
-                    <RawDataViewer file={file} />
+                    <RawDataViewer file={currentFile} />
                   </div>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-4 min-h-[300px]">
