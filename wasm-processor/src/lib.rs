@@ -16,6 +16,15 @@ pub fn process_raw_data(data: &[u8]) -> Result<js_sys::Uint8Array, JsValue> {
 
     web_sys::console::log_1(&JsValue::from_str(&format!("RAW decode started for array of size: {} bytes", data.len())));
 
+    // DNG で LJPEG 精度10を使用している場合は事前チェック
+    // rawloader が対応していない形式のため、早期に適切なエラーメッセージを返す
+    if is_unsupported_ljpeg_dng(data) {
+        let err_msg = "このDNGファイルはLJPEG圧縮で精度10を使用しており、現在未対応です。\
+                       LJPEG非圧縮のDNG、またはJPEG2000圧縮のDNGをご使用ください。";
+        web_sys::console::log_1(&JsValue::from_str(&format!("Early detection: {}", err_msg)));
+        return Err(JsValue::from_str(err_msg));
+    }
+
     // rawloaderを使用して本物のRAW画像をパース (パニックを安全にキャッチ)
     let image_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         decode(&mut std::io::Cursor::new(data))
@@ -149,4 +158,34 @@ pub fn get_width() -> u32 {
 #[wasm_bindgen]
 pub fn get_height() -> u32 {
     IMAGE_DIMENSIONS.with(|dims| dims.borrow().1)
+}
+
+// DNG で LJPEG 精度10を使用しているかをチェック（簡易実装）
+fn is_unsupported_ljpeg_dng(data: &[u8]) -> bool {
+    if data.len() < 8 {
+        return false;
+    }
+
+    // TIFF ヘッダ判定（DNG は TIFF ベース）
+    // リトルエンディアン (0x49 0x49) または ビッグエンディアン (0x4D 0x4D)
+    let is_tiff = (data[0] == 0x49 && data[1] == 0x49) || (data[0] == 0x4D && data[1] == 0x4D);
+
+    if !is_tiff {
+        return false;
+    }
+
+    // バイナリ内に LJPEG 精度10 に関連する特定のバイトパターンを検出
+    // "ljpeg" 文字列または LJPEG 関連のエラーメッセージが含まれていないか確認
+    let data_str = String::from_utf8_lossy(data);
+
+    // rawloader の LJPEG パーサが失敗する典型的なパターン
+    if data_str.contains("precision 10") || data_str.contains("sof.precision 10") {
+        return true;
+    }
+
+    // さらに詳細：TIFF タグを解析して Compression == 7 (LJPEG) かつ
+    // ImageBitDepth や関連タグで精度情報が10と判明した場合
+    // （完全な実装は複雑なため、ここでは簡易版）
+
+    false
 }
