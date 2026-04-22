@@ -27,6 +27,7 @@ import type { MediaMetadata } from './types.ts';
 import { extractMetadata, formatBytes, formatDuration } from './utils/mediaProcessor.ts';
 import InfoGrid from './components/InfoGrid.tsx';
 import MetadataSection from './components/MetadataSection.tsx';
+import { RawDataViewer } from './components/RawDataViewer.tsx';
 
 const App: React.FC = () => {
   const [metadata, setMetadata] = useState<MediaMetadata | null>(null);
@@ -239,10 +240,9 @@ const App: React.FC = () => {
                 ) : metadata.mimeType.startsWith('video/') ? (
                   <video src={metadata.previewUrl} className="w-full h-full object-contain bg-zinc-950 min-h-[300px]" controls muted />
                 ) : /\.(dng|cr2|cr3|arw|nef|nrw|raf|rw2|orf|srw|x3f|tiff?)$/i.test(metadata.fileName) ? (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-4 min-h-[300px]">
-                    <div className="w-24 h-24 bg-zinc-800 rounded-full flex items-center justify-center text-zinc-500"><ImageOff size={40}/></div>
-                    <p className="text-zinc-500 font-mono text-xs uppercase tracking-widest">RAW形式</p>
-                    <p className="text-zinc-600 font-mono text-[10px]">ブラウザプレビュー未対応</p>
+                  <div className="w-full h-full flex flex-col items-stretch justify-start min-h-[300px] bg-zinc-950/80 rounded-[2rem] overflow-hidden">
+                    {/* ここで新しく作ったWASM対応のRawDataViewerを呼び出します */}
+                    <RawDataViewer file={file} />
                   </div>
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-4 min-h-[300px]">
