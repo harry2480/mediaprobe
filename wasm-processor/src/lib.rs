@@ -160,9 +160,9 @@ pub fn get_height() -> u32 {
     IMAGE_DIMENSIONS.with(|dims| dims.borrow().1)
 }
 
-// DNG で LJPEG 精度10を使用しているかをチェック（簡易実装）
+// DNG で LJPEG 精度10を使用しているかをチェック
 fn is_unsupported_ljpeg_dng(data: &[u8]) -> bool {
-    if data.len() < 8 {
+    if data.len() < 5 {
         return false;
     }
 
@@ -174,18 +174,16 @@ fn is_unsupported_ljpeg_dng(data: &[u8]) -> bool {
         return false;
     }
 
-    // バイナリ内に LJPEG 精度10 に関連する特定のバイトパターンを検出
-    // "ljpeg" 文字列または LJPEG 関連のエラーメッセージが含まれていないか確認
-    let data_str = String::from_utf8_lossy(data);
-
-    // rawloader の LJPEG パーサが失敗する典型的なパターン
-    if data_str.contains("precision 10") || data_str.contains("sof.precision 10") {
-        return true;
+    // JPEG Lossless (LJPEG) の SOF3 マーカー (0xFFC3) を検出
+    // DNG内に埋め込まれたJPEGストリーム内の SOF3 の sample precision を確認
+    // SOF3 マーカー直後: [0xFF, 0xC3, Lh, Ll, P, ...]
+    // P (5バイト目) = sample precision （精度10なら 0x0A）
+    for window in data.windows(5) {
+        if window[0] == 0xFF && window[1] == 0xC3 && window[4] == 10 {
+            // SOF3 + precision 10 検出
+            return true;
+        }
     }
-
-    // さらに詳細：TIFF タグを解析して Compression == 7 (LJPEG) かつ
-    // ImageBitDepth や関連タグで精度情報が10と判明した場合
-    // （完全な実装は複雑なため、ここでは簡易版）
 
     false
 }
