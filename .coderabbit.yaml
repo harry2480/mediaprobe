@@ -1,0 +1,23 @@
+# CodeRabbit Configuration
+# https://coderabbit.ai
+
+language: ja
+
+reviews:
+  auto_review:
+    enabled: true
+  review_status: true
+  path_filters:
+    - src/**/*.{ts,tsx,js,jsx}
+    - wasm-processor/src/**/*.rs
+    - package.json
+    - .github/**/*.yml
+    - "!node_modules/**"
+    - "!dist/**"
+    - "!build/**"
+    - "!.git/**"
+    - "!wasm-processor/target/**"
+    - "!*.lock"
+
+chat:
+  auto_reply: true
