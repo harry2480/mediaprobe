@@ -26,7 +26,14 @@ pub fn process_raw_data(data: &[u8]) -> Result<js_sys::Uint8Array, JsValue> {
     // サブサンプリング（間引き）によるメモリ最適化
     // 最大表示解像度を1920px程度に制限し、WASMのOOMを回避する
     const MAX_DIM: u32 = 1920;
-    let step = std::cmp::max(1, std::cmp::max(width / MAX_DIM, height / MAX_DIM));
+    // 切り上げ除算で step を算出し、new_width/new_height が MAX_DIM を超えないようにする
+    let step = std::cmp::max(
+        1,
+        std::cmp::max(
+            (width + MAX_DIM - 1) / MAX_DIM,
+            (height + MAX_DIM - 1) / MAX_DIM,
+        ),
+    );
     
     let new_width = width / step;
     let new_height = height / step;
