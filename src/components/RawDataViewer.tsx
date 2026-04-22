@@ -72,10 +72,9 @@ export const RawDataViewer: React.FC<Props> = ({ file }) => {
             renderCanvas(e.data.pixels, e.data.width, e.data.height, gamma);
           } else {
             console.error('WASM Worker error details:', e.data.error);
+            // WASMがエラーを返した場合は、ファイル形式未対応として扱う
             setError(
-              e.data.error.includes("LJPEG") || e.data.error.includes("panicked")
-                ? 'このRAWファイル（10-bit DNG等）のリニア現像には未対応です。簡易プレビューのみを表示しています。'
-                : e.data.error || 'Failed to process RAW data.'
+              `このRAWファイルの処理に対応していません。embedded JPEG プレビューのみを表示します。\n詳細: ${e.data.error}`
             );
           }
           setLoading(false);
