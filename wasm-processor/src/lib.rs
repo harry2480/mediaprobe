@@ -7,16 +7,34 @@ thread_local! {
 
 #[wasm_bindgen]
 pub fn process_raw_data(data: &[u8]) -> Result<js_sys::Uint8Array, JsValue> {
+    // パニック時にブラウザコンソールにRustのスタックトレースを出力する
+    console_error_panic_hook::set_once();
+
     if data.is_empty() {
         return Err(JsValue::from_str("Provided binary data is empty."));
     }
 
-    // rawloaderを使用して本物のRAW画像をパース
-    let image = match decode(&mut std::io::Cursor::new(data)) {
-        Ok(img) => img,
-        Err(e) => {
+    web_sys::console::log_1(&JsValue::from_str(&format!("RAW decode started for array of size: {} bytes", data.len())));
+
+    // rawloaderを使用して本物のRAW画像をパース (パニックを安全にキャッチ)
+    let image_result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        decode(&mut std::io::Cursor::new(data))
+    }));
+
+    let image = match image_result {
+        Ok(Ok(img)) => {
+            web_sys::console::log_1(&JsValue::from_str("RAW successfully parsed."));
+            img
+        },
+        Ok(Err(e)) => {
             let err_msg = format!("Failed to decode RAW data: {}", e);
+            web_sys::console::log_1(&JsValue::from_str(&err_msg));
             return Err(JsValue::from_str(&err_msg));
+        },
+        Err(_) => {
+            let err_msg = "RAW decode panicked. Unsupported format (e.g. 10-bit LJPEG DNG).";
+            web_sys::console::log_1(&JsValue::from_str(err_msg));
+            return Err(JsValue::from_str(err_msg));
         }
     };
 
@@ -38,13 +56,23 @@ pub fn process_raw_data(data: &[u8]) -> Result<js_sys::Uint8Array, JsValue> {
     let new_width = width / step;
     let new_height = height / step;
     
+    web_sys::console::log_1(&JsValue::from_str(&format!(
+        "Original size: {}x{}, Step: {}, New size: {}x{}",
+        width, height, step, new_width, new_height
+    )));
+
     // IMAGE_DIMENSIONSに保存（フロントのCanvas描画時のサイズとして使用）
     IMAGE_DIMENSIONS.with(|dims| {
         *dims.borrow_mut() = (new_width, new_height);
     });
 
+    let alloc_size = (new_width * new_height * 4) as usize;
+    web_sys::console::log_1(&JsValue::from_str(&format!("Allocating {} bytes for pixels...", alloc_size)));
+    
     // 縮小後の画素数分だけメモリを確保（巨大配列を避ける）
-    let mut pixels = vec![0u8; (new_width * new_height * 4) as usize];
+    let mut pixels = vec![0u8; alloc_size];
+    
+    web_sys::console::log_1(&JsValue::from_str("Processing linear data..."));
     
     // 簡易的にRAWのリニアデータを描画にマッピング
     match image.data {
@@ -109,6 +137,7 @@ pub fn process_raw_data(data: &[u8]) -> Result<js_sys::Uint8Array, JsValue> {
         }
     }
 
+    web_sys::console::log_1(&JsValue::from_str("Completed pixel processing, transferring memory to JS..."));
     Ok(js_sys::Uint8Array::from(&pixels[..]))
 }
 
