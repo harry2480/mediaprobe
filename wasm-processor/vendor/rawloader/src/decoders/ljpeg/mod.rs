@@ -265,7 +265,7 @@ impl<'a> LjpegDecompressor<'a> {
           c => return Err(format!("ljpeg: {} component files not supported", c).to_string()),
         }
       },
-      8 => decode_hasselblad(self, out, width),
+      7 | 8 => decode_hasselblad(self, out, width),
       p => return Err(format!("ljpeg: predictor {} not supported", p).to_string()),
     }
   }
