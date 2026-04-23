@@ -27,7 +27,7 @@ import type { MediaMetadata } from './types.ts';
 import { extractMetadata, formatBytes, formatDuration } from './utils/mediaProcessor.ts';
 import InfoGrid from './components/InfoGrid.tsx';
 import MetadataSection from './components/MetadataSection.tsx';
-import { RawDataViewer } from './src/components/RawDataViewer.tsx';
+import { RawDataViewer } from './components/RawDataViewer.tsx';
 
 const App: React.FC = () => {
   const [metadata, setMetadata] = useState<MediaMetadata | null>(null);
