@@ -55,8 +55,8 @@ function mapExifOutput(raw: any, imgWidth?: number, imgHeight?: number): {
     colorSpace: raw.ProfileDescription ?? (e.ColorSpace === 1 ? 'sRGB' : e.ColorSpace != null ? String(e.ColorSpace) : undefined),
     profileName: raw.ProfileDescription,
     bitDepth: e.BitsPerSample,
-    width: imgWidth,
-    height: imgHeight,
+    width: imgWidth ?? e.ImageWidth ?? e.PixelXDimension,
+    height: imgHeight ?? e.ImageLength ?? e.PixelYDimension,
     orientation: e.Orientation,
   };
   const exif: ExifInfo = {
@@ -238,6 +238,43 @@ export const extractMetadata = async (file: File): Promise<MediaMetadata> => {
   }
 
   if (isImageFile(file)) {
+    const rawFileExtensions = ['dng', 'cr2', 'cr3', 'arw', 'nef', 'nrw', 'raf', 'rw2', 'orf', 'srw', 'x3f'];
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
+    const isRawFile = rawFileExtensions.includes(fileExt);
+
+    if (isRawFile) {
+      return (async () => {
+        try {
+          const exifData = await extractExifMetadata(file);
+          const width = exifData.tiff?.width ?? exifData.dng?.imageWidth ?? exifData.colorInfo?.width;
+          const height = exifData.tiff?.height ?? exifData.dng?.imageLength ?? exifData.colorInfo?.height;
+
+          if (!width || !height) {
+            return baseMetadata;
+          }
+
+          const standardLabel = getStandardLabel(width, height);
+          const printSizes = calculatePrintSizes(width, height);
+          const uncompressedSize = width * height * 4;
+
+          return {
+            ...baseMetadata,
+            width,
+            height,
+            aspectRatio: `${width}:${height}`,
+            standardLabel,
+            printSizes,
+            uncompressedSize,
+            compressionRatio: (file.size / uncompressedSize) * 100,
+            ...exifData,
+          };
+        } catch (err) {
+          console.error('RAW metadata extraction error:', err);
+          return baseMetadata;
+        }
+      })();
+    }
+
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = async () => {

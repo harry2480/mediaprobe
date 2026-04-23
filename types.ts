@@ -66,6 +66,8 @@ export interface TiffInfo {
   model?: string;
   software?: string;
   photometricInterpretation?: number | string;
+  width?: number;
+  height?: number;
 }
 
 export interface DngInfo {
@@ -88,6 +90,8 @@ export interface DngInfo {
   defaultBlackRender?: number | string;
   whiteLevel?: number;
   uniqueCameraModel?: string;
+  imageWidth?: number;
+  imageLength?: number;
 }
 
 export interface MediaMetadata {

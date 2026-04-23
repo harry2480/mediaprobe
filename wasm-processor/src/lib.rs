@@ -73,7 +73,8 @@ pub fn process_raw_data(data: &[u8]) -> Result<js_sys::Uint8Array, JsValue> {
     let mut pixels = vec![0u8; alloc_size];
     
     web_sys::console::log_1(&JsValue::from_str("Processing linear data..."));
-    
+    web_sys::console::log_1(&JsValue::from_str(&format!("Image data type: {:?}", std::any::type_name_of_val(&image.data))));
+
     // 簡易的にRAWのリニアデータを描画にマッピング
     match image.data {
         rawloader::RawImageData::Integer(ref linear_data) => {
@@ -133,6 +134,13 @@ pub fn process_raw_data(data: &[u8]) -> Result<js_sys::Uint8Array, JsValue> {
                         pixels[dst_idx + 3] = 255;       // A
                     }
                 }
+            }
+        }
+        _ => {
+            web_sys::console::log_1(&JsValue::from_str("Warning: Unsupported RAW data format, filling with placeholder data"));
+            // 予期しないデータ形式の場合はプレースホルダーを生成
+            for i in 0..pixels.len() {
+                pixels[i] = 128;
             }
         }
     }
