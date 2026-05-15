@@ -35,13 +35,10 @@ const App: React.FC = () => {
   const [status, setStatus] = useState<AnalysisStatus>(AnalysisStatus.IDLE);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<any>(null);
-  const [showDebug, setShowDebug] = useState(false);
 
   const processFile = async (selectedFile: File) => {
     setError(null);
     setMetadata(null);
-    setDebugInfo(null);
     setCurrentFile(selectedFile);
     setStatus(AnalysisStatus.EXTRACTING);
 
@@ -477,56 +474,6 @@ const App: React.FC = () => {
                 ]}
               />
             </section>
-
-            {/\.(dng|cr2|cr3|arw|nef|nrw|raf|rw2|orf|srw|x3f|tiff?)$/i.test(metadata.fileName) && (
-              <button
-                onClick={() => {
-                  const rawMetadata = (window as any).debugRawMetadata;
-                  setDebugInfo(rawMetadata);
-                  setShowDebug(!showDebug);
-                }}
-                className="w-full bg-zinc-900/40 border border-zinc-800/50 p-4 rounded-[2rem] text-left hover:border-zinc-700 transition-all"
-              >
-                <p className="text-xs text-zinc-500 font-bold uppercase tracking-widest">
-                  {showDebug ? '▼' : '▶'} RAW デバッグ情報（GitHub確認用）
-                </p>
-              </button>
-            )}
-
-            {showDebug && debugInfo && (
-              <div className="bg-zinc-900/20 border border-zinc-800/50 p-6 rounded-[2rem] font-mono text-[10px] overflow-auto max-h-96">
-                <p className="text-zinc-300 mb-2">
-                  <strong>ファイル:</strong> {debugInfo.fileName}
-                </p>
-                <p className="text-zinc-300 mb-4">
-                  <strong>ファイルサイズ:</strong> {formatBytes(debugInfo.fileSize)}
-                </p>
-                <details className="space-y-2">
-                  <summary className="text-blue-400 cursor-pointer font-bold">TIFF 情報 (展開)</summary>
-                  <pre className="text-zinc-400 bg-zinc-950/50 p-2 rounded overflow-x-auto">
-                    {JSON.stringify(debugInfo.exifData.tiff, null, 2)}
-                  </pre>
-                </details>
-                <details className="space-y-2 mt-2">
-                  <summary className="text-blue-400 cursor-pointer font-bold">DNG 情報 (展開)</summary>
-                  <pre className="text-zinc-400 bg-zinc-950/50 p-2 rounded overflow-x-auto">
-                    {JSON.stringify(debugInfo.exifData.dng, null, 2)}
-                  </pre>
-                </details>
-                <details className="space-y-2 mt-2">
-                  <summary className="text-blue-400 cursor-pointer font-bold">ColorInfo (展開)</summary>
-                  <pre className="text-zinc-400 bg-zinc-950/50 p-2 rounded overflow-x-auto">
-                    {JSON.stringify(debugInfo.exifData.colorInfo, null, 2)}
-                  </pre>
-                </details>
-                <details className="space-y-2 mt-2">
-                  <summary className="text-blue-400 cursor-pointer font-bold">EXIF (展開)</summary>
-                  <pre className="text-zinc-400 bg-zinc-950/50 p-2 rounded overflow-x-auto">
-                    {JSON.stringify(debugInfo.exifData.exif, null, 2)}
-                  </pre>
-                </details>
-              </div>
-            )}
 
             <div className="bg-zinc-900/40 border border-zinc-800 p-6 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex items-start gap-4 max-w-2xl">

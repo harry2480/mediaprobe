@@ -156,10 +156,8 @@ async function extractExifMetadata(file: File, imgWidth?: number, imgHeight?: nu
       iptc: false, jfif: false, ihdr: false,
       mergeOutput: true,
     });
-    console.log('Raw EXIF output:', raw);
     return mapExifOutput(raw, imgWidth, imgHeight);
   } catch (err) {
-    console.warn('EXIF extraction failed:', err);
     return {};
   }
 }
@@ -253,27 +251,14 @@ export const extractMetadata = async (file: File): Promise<MediaMetadata> => {
       return (async () => {
         try {
           const exifData = await extractExifMetadata(file);
-          console.log('RAW EXIF Data:', exifData);
-
-          // Store debug info globally for UI display
-          (window as any).debugRawMetadata = {
-            fileName: file.name,
-            fileSize: file.size,
-            exifData,
-            timestamp: new Date().toISOString()
-          };
-
           const width = exifData.tiff?.width
             ?? exifData.dng?.imageWidth
             ?? exifData.colorInfo?.width;
           const height = exifData.tiff?.height
             ?? exifData.dng?.imageLength
             ?? exifData.colorInfo?.height;
-          console.log('Extracted dimensions:', { width, height });
 
           if (!width || !height) {
-            console.warn('No dimensions found for RAW file:', file.name);
-            console.log('Available EXIF data keys:', Object.keys(exifData));
             return baseMetadata;
           }
 
