@@ -123,31 +123,31 @@ export const RawDataViewer: React.FC<Props> = ({ file }) => {
   }
 
   return (
-    <div className="flex flex-col space-y-4">
-      <h3 className="text-xl font-bold">RAW Preview & Analysis</h3>
+    <div className="flex flex-col space-y-4 w-full h-full">
+      <h3 className="text-xl font-bold text-white">RAW Preview & Analysis</h3>
 
-      {error && <div className="p-4 border-l-4 border-yellow-500 bg-yellow-50 text-yellow-700">{error}</div>}
+      {error && <div className="p-4 border-l-4 border-yellow-500 bg-yellow-500/10 text-yellow-400 rounded">{error}</div>}
 
       {/* Fast JPEG Preview Section (Fallback or Loading) */}
       {(loading || error) && previewUrl && (
-        <div className="flex flex-col items-center p-4 border rounded bg-gray-50">
-          <p className="text-sm text-gray-500 mb-2">Exif Preview</p>
-          <img src={previewUrl} alt="RAW Fast Preview" className="max-w-full h-auto shadow-sm" />
-          {loading && <p className="text-blue-500 animate-pulse mt-4">Processing full RAW data in WebAssembly...</p>}
+        <div className="flex flex-col items-center p-4 border border-zinc-700 rounded-lg bg-zinc-800">
+          <p className="text-xs text-zinc-400 mb-2 uppercase">Exif Preview</p>
+          <img src={previewUrl} alt="RAW Fast Preview" className="max-w-full h-auto rounded shadow-sm" />
+          {loading && <p className="text-blue-400 animate-pulse mt-4 text-xs">Processing full RAW data in WebAssembly...</p>}
         </div>
       )}
 
-      {loading && !previewUrl && <p className="text-blue-500 animate-pulse">Processing RAW data in WebAssembly...</p>}
+      {loading && !previewUrl && <p className="text-blue-400 animate-pulse text-sm">Processing RAW data in WebAssembly...</p>}
 
-      {error && !previewUrl && <p className="text-red-500">表示できるプレビューがありません。</p>}
+      {error && !previewUrl && <p className="text-red-400 text-sm">表示できるプレビューがありません。</p>}
 
       {/* WASM デコード後の RAW 描画 */}
       {!loading && !error && pixelData && (
-        <div className="flex flex-col items-center p-4 border rounded bg-gray-50">
-          <p className="text-sm text-gray-500 mb-2">Full RAW Data ({pixelData.width}x{pixelData.height})</p>
-          <canvas ref={canvasRef} className="max-w-full h-auto shadow-md bg-transparent" />
+        <div className="flex flex-col items-center p-4 border border-zinc-700 rounded-lg bg-zinc-800 flex-1 overflow-auto">
+          <p className="text-xs text-zinc-400 mb-2 uppercase">Full RAW Data ({pixelData.width}x{pixelData.height})</p>
+          <canvas ref={canvasRef} className="max-w-full max-h-[400px] rounded shadow-md bg-zinc-900" />
           <div className="mt-4 flex flex-col w-full max-w-md">
-            <label className="mb-2 font-medium">Gamma Correction: {gamma.toFixed(2)}</label>
+            <label className="mb-2 font-medium text-xs text-zinc-300">Gamma Correction: {gamma.toFixed(2)}</label>
             <input
               type="range"
               min="0.1"
