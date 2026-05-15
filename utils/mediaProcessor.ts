@@ -255,6 +255,14 @@ export const extractMetadata = async (file: File): Promise<MediaMetadata> => {
           const exifData = await extractExifMetadata(file);
           console.log('RAW EXIF Data:', exifData);
 
+          // Store debug info globally for UI display
+          (window as any).debugRawMetadata = {
+            fileName: file.name,
+            fileSize: file.size,
+            exifData,
+            timestamp: new Date().toISOString()
+          };
+
           const width = exifData.tiff?.width
             ?? exifData.dng?.imageWidth
             ?? exifData.colorInfo?.width;
