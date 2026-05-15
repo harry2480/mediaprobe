@@ -78,27 +78,45 @@ const App: React.FC = () => {
   const formatMetadataForClipboard = (meta: MediaMetadata): string => {
     const lines: string[] = [];
     lines.push(`[${meta.fileName}]`);
-    lines.push(`ファイルサイズ: ${formatBytes(meta.fileSize)}`);
-    if (meta.width && meta.height) lines.push(`解像度: ${meta.width}×${meta.height}`);
-    if (meta.aspectRatio) lines.push(`アスペクト比: ${meta.aspectRatio}`);
-    if (meta.standardLabel) lines.push(`規格: ${meta.standardLabel}`);
-    if (meta.duration) lines.push(`再生時間: ${formatDuration(meta.duration)}`);
-    if (meta.totalBitrate) lines.push(`ビットレート: ${(meta.totalBitrate / 1000000).toFixed(2)} Mbps`);
-    if (meta.sampleRate) lines.push(`サンプリング周波数: ${(meta.sampleRate / 1000).toFixed(1)} kHz`);
-    if (meta.channels) lines.push(`チャンネル数: ${meta.channels} ch`);
-    if (meta.exif?.make) lines.push(`カメラメーカー: ${meta.exif.make}`);
-    if (meta.exif?.model) lines.push(`カメラモデル: ${meta.exif.model}`);
-    if (meta.exif?.iso) lines.push(`ISO: ${meta.exif.iso}`);
-    if (meta.exif?.aperture) lines.push(`絞り値: f/${meta.exif.aperture}`);
-    if (meta.exif?.exposureTime) lines.push(`露出時間: 1/${Math.round(1 / meta.exif.exposureTime)}s`);
-    if (meta.exif?.focalLength) lines.push(`焦点距離: ${meta.exif.focalLength} mm`);
-    if (meta.exif?.lensModel) lines.push(`レンズ: ${meta.exif.lensModel}`);
-    if (meta.printSizes?.[0]) {
-      lines.push(`\n印刷サイズ:`);
-      meta.printSizes.forEach(p => {
-        lines.push(`  ${p.dpi} DPI: ${p.widthCm.toFixed(1)} × ${p.heightCm.toFixed(1)} cm`);
-      });
+
+    const isRawFile = meta.dng || meta.tiff;
+
+    if (isRawFile) {
+      lines.push(`\n【RAW現像に必須】`);
+      if (meta.exif?.make) lines.push(`カメラメーカー: ${meta.exif.make}`);
+      if (meta.exif?.model) lines.push(`カメラモデル: ${meta.exif.model}`);
+      if (meta.exif?.iso) lines.push(`ISO: ${meta.exif.iso}`);
+      if (meta.exif?.aperture) lines.push(`絞り値: f/${meta.exif.aperture}`);
+      if (meta.exif?.exposureTime) lines.push(`露出時間: 1/${Math.round(1 / meta.exif.exposureTime)}s`);
+      if (meta.exif?.focalLength) lines.push(`焦点距離: ${meta.exif.focalLength} mm`);
+      if (meta.exif?.whiteBalance !== undefined) lines.push(`ホワイトバランス: ${meta.exif.whiteBalance}`);
+
+      if (meta.dng) {
+        if (meta.dng.colorMatrix1) lines.push(`カラーマトリックス1: 使用`);
+        if (meta.dng.calibrationIlluminant1) lines.push(`キャリブレーション光源1: ${meta.dng.calibrationIlluminant1}`);
+        if (meta.dng.calibrationIlluminant2) lines.push(`キャリブレーション光源2: ${meta.dng.calibrationIlluminant2}`);
+      }
+
+      lines.push(`\n【参考情報】`);
+      if (meta.width && meta.height) lines.push(`解像度: ${meta.width}×${meta.height}`);
+      lines.push(`ファイルサイズ: ${formatBytes(meta.fileSize)}`);
+      if (meta.exif?.lensModel) lines.push(`レンズ: ${meta.exif.lensModel}`);
+    } else {
+      lines.push(`ファイルサイズ: ${formatBytes(meta.fileSize)}`);
+      if (meta.width && meta.height) lines.push(`解像度: ${meta.width}×${meta.height}`);
+      if (meta.duration) lines.push(`再生時間: ${formatDuration(meta.duration)}`);
+      if (meta.totalBitrate) lines.push(`ビットレート: ${(meta.totalBitrate / 1000000).toFixed(2)} Mbps`);
+      if (meta.sampleRate) lines.push(`サンプリング周波数: ${(meta.sampleRate / 1000).toFixed(1)} kHz`);
+      if (meta.channels) lines.push(`チャンネル数: ${meta.channels} ch`);
+      if (meta.exif?.make) lines.push(`カメラメーカー: ${meta.exif.make}`);
+      if (meta.exif?.model) lines.push(`カメラモデル: ${meta.exif.model}`);
+      if (meta.exif?.iso) lines.push(`ISO: ${meta.exif.iso}`);
+      if (meta.exif?.aperture) lines.push(`絞り値: f/${meta.exif.aperture}`);
+      if (meta.exif?.exposureTime) lines.push(`露出時間: 1/${Math.round(1 / meta.exif.exposureTime)}s`);
+      if (meta.exif?.focalLength) lines.push(`焦点距離: ${meta.exif.focalLength} mm`);
+      if (meta.exif?.lensModel) lines.push(`レンズ: ${meta.exif.lensModel}`);
     }
+
     return lines.join('\n');
   };
 
