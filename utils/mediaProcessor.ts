@@ -55,8 +55,8 @@ function mapExifOutput(raw: any, imgWidth?: number, imgHeight?: number): {
     colorSpace: raw.ProfileDescription ?? (e.ColorSpace === 1 ? 'sRGB' : e.ColorSpace != null ? String(e.ColorSpace) : undefined),
     profileName: raw.ProfileDescription,
     bitDepth: e.BitsPerSample,
-    width: imgWidth ?? e.ImageWidth ?? e.PixelXDimension,
-    height: imgHeight ?? e.ImageLength ?? e.PixelYDimension,
+    width: imgWidth ?? e.ImageWidth ?? e.ExifImageWidth ?? e.PixelXDimension,
+    height: imgHeight ?? e.ImageLength ?? e.ExifImageHeight ?? e.PixelYDimension,
     orientation: e.Orientation,
   };
   const exif: ExifInfo = {
@@ -108,8 +108,8 @@ function mapExifOutput(raw: any, imgWidth?: number, imgHeight?: number): {
     model: e.Model,
     software: e.Software,
     photometricInterpretation: e.PhotometricInterpretation,
-    width: imgWidth ?? e.ImageWidth,
-    height: imgHeight ?? e.ImageLength,
+    width: imgWidth ?? e.ImageWidth ?? e.ExifImageWidth,
+    height: imgHeight ?? e.ImageLength ?? e.ExifImageHeight,
   };
   const dng: DngInfo = {
     analogBalance: e.AnalogBalance,
@@ -152,9 +152,11 @@ async function extractExifMetadata(file: File, imgWidth?: number, imgHeight?: nu
     const raw = await exifr.parse(file, {
       tiff: true, exif: true, gps: true,
       icc: true, xmp: true, makerNote: true,
-      ifd1: false, iptc: false, jfif: false, ihdr: false,
+      ifd1: true,
+      iptc: false, jfif: false, ihdr: false,
       mergeOutput: true,
     });
+    console.log('Raw EXIF output:', raw);
     return mapExifOutput(raw, imgWidth, imgHeight);
   } catch (err) {
     console.warn('EXIF extraction failed:', err);
@@ -251,10 +253,27 @@ export const extractMetadata = async (file: File): Promise<MediaMetadata> => {
       return (async () => {
         try {
           const exifData = await extractExifMetadata(file);
-          const width = exifData.tiff?.width ?? exifData.dng?.imageWidth ?? exifData.colorInfo?.width;
-          const height = exifData.tiff?.height ?? exifData.dng?.imageLength ?? exifData.colorInfo?.height;
+          console.log('RAW EXIF Data:', exifData);
+
+          // Store debug info globally for UI display
+          (window as any).debugRawMetadata = {
+            fileName: file.name,
+            fileSize: file.size,
+            exifData,
+            timestamp: new Date().toISOString()
+          };
+
+          const width = exifData.tiff?.width
+            ?? exifData.dng?.imageWidth
+            ?? exifData.colorInfo?.width;
+          const height = exifData.tiff?.height
+            ?? exifData.dng?.imageLength
+            ?? exifData.colorInfo?.height;
+          console.log('Extracted dimensions:', { width, height });
 
           if (!width || !height) {
+            console.warn('No dimensions found for RAW file:', file.name);
+            console.log('Available EXIF data keys:', Object.keys(exifData));
             return baseMetadata;
           }
 
