@@ -108,6 +108,8 @@ function mapExifOutput(raw: any, imgWidth?: number, imgHeight?: number): {
     model: e.Model,
     software: e.Software,
     photometricInterpretation: e.PhotometricInterpretation,
+    width: imgWidth ?? e.ImageWidth,
+    height: imgHeight ?? e.ImageLength,
   };
   const dng: DngInfo = {
     analogBalance: e.AnalogBalance,
@@ -129,6 +131,8 @@ function mapExifOutput(raw: any, imgWidth?: number, imgHeight?: number): {
     defaultBlackRender: e.DefaultBlackRender,
     whiteLevel: e.WhiteLevel,
     uniqueCameraModel: e.UniqueCameraModel,
+    imageWidth: e.ImageWidth,
+    imageLength: e.ImageLength,
   };
 
   const hasTiff = hasAnyValue(tiff);
@@ -147,12 +151,13 @@ async function extractExifMetadata(file: File, imgWidth?: number, imgHeight?: nu
   try {
     const raw = await exifr.parse(file, {
       tiff: true, exif: true, gps: true,
-      icc: true, xmp: true,
+      icc: true, xmp: true, makerNote: true,
       ifd1: false, iptc: false, jfif: false, ihdr: false,
       mergeOutput: true,
     });
     return mapExifOutput(raw, imgWidth, imgHeight);
-  } catch {
+  } catch (err) {
+    console.warn('EXIF extraction failed:', err);
     return {};
   }
 }
