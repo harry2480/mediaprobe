@@ -114,6 +114,31 @@ const App: React.FC = () => {
     }
   };
 
+  React.useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      switch (e.key.toLowerCase()) {
+        case 'r':
+          if (status !== AnalysisStatus.IDLE) {
+            e.preventDefault();
+            reset();
+          }
+          break;
+        case 'c':
+          if (metadata && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            copyMetadataToClipboard();
+          }
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [status, metadata]);
+
   const formatBitrate = (bps?: number) => bps ? `${(bps / 1000).toFixed(2)} kbps` : 'N/A';
 
   const formatAperture = (f?: number) => f !== undefined ? `f/${f}` : undefined;
@@ -217,8 +242,12 @@ const App: React.FC = () => {
             <span className="text-[10px] font-bold text-green-500 uppercase">完全ローカル解析 (プライバシー保護)</span>
           </div>
           {status !== AnalysisStatus.IDLE && (
-            <button onClick={reset} className="text-xs bg-zinc-800 hover:bg-zinc-700 px-4 py-1.5 rounded-full transition-all border border-zinc-700">
-              別のファイルを解析
+            <button
+              onClick={reset}
+              title="キーボード: R キー"
+              className="text-xs bg-zinc-800 hover:bg-zinc-700 px-4 py-1.5 rounded-full transition-all border border-zinc-700 hover:border-zinc-600"
+            >
+              別のファイルを解析 <span className="hidden sm:inline text-zinc-500 ml-1">[R]</span>
             </button>
           )}
         </div>
@@ -336,6 +365,7 @@ const App: React.FC = () => {
             <div className="flex gap-3 flex-wrap">
               <button
                 onClick={copyMetadataToClipboard}
+                title="キーボード: C キー"
                 className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase transition-all border ${
                   copiedToClipboard
                     ? 'bg-green-500/20 border-green-500/50 text-green-400'
@@ -350,7 +380,7 @@ const App: React.FC = () => {
                 ) : (
                   <>
                     <Copy size={16} />
-                    メタデータをコピー
+                    メタデータをコピー <span className="hidden sm:inline text-current/60 ml-1">[C]</span>
                   </>
                 )}
               </button>
