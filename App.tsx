@@ -20,7 +20,9 @@ import {
   Palette,
   FileImage,
   Layers,
-  ImageOff
+  ImageOff,
+  Copy,
+  Check
 } from 'lucide-react';
 import { AnalysisStatus } from './types.ts';
 import type { MediaMetadata } from './types.ts';
@@ -35,6 +37,7 @@ const App: React.FC = () => {
   const [status, setStatus] = useState<AnalysisStatus>(AnalysisStatus.IDLE);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [copiedToClipboard, setCopiedToClipboard] = useState(false);
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
 
@@ -69,6 +72,46 @@ const App: React.FC = () => {
     setCurrentFile(null);
     setStatus(AnalysisStatus.IDLE);
     setError(null);
+    setCopiedToClipboard(false);
+  };
+
+  const formatMetadataForClipboard = (meta: MediaMetadata): string => {
+    const lines: string[] = [];
+    lines.push(`[${meta.fileName}]`);
+    lines.push(`ファイルサイズ: ${formatBytes(meta.fileSize)}`);
+    if (meta.width && meta.height) lines.push(`解像度: ${meta.width}×${meta.height}`);
+    if (meta.aspectRatio) lines.push(`アスペクト比: ${meta.aspectRatio}`);
+    if (meta.standardLabel) lines.push(`規格: ${meta.standardLabel}`);
+    if (meta.duration) lines.push(`再生時間: ${formatDuration(meta.duration)}`);
+    if (meta.totalBitrate) lines.push(`ビットレート: ${(meta.totalBitrate / 1000000).toFixed(2)} Mbps`);
+    if (meta.sampleRate) lines.push(`サンプリング周波数: ${(meta.sampleRate / 1000).toFixed(1)} kHz`);
+    if (meta.channels) lines.push(`チャンネル数: ${meta.channels} ch`);
+    if (meta.exif?.make) lines.push(`カメラメーカー: ${meta.exif.make}`);
+    if (meta.exif?.model) lines.push(`カメラモデル: ${meta.exif.model}`);
+    if (meta.exif?.iso) lines.push(`ISO: ${meta.exif.iso}`);
+    if (meta.exif?.aperture) lines.push(`絞り値: f/${meta.exif.aperture}`);
+    if (meta.exif?.exposureTime) lines.push(`露出時間: 1/${Math.round(1 / meta.exif.exposureTime)}s`);
+    if (meta.exif?.focalLength) lines.push(`焦点距離: ${meta.exif.focalLength} mm`);
+    if (meta.exif?.lensModel) lines.push(`レンズ: ${meta.exif.lensModel}`);
+    if (meta.printSizes?.[0]) {
+      lines.push(`\n印刷サイズ:`);
+      meta.printSizes.forEach(p => {
+        lines.push(`  ${p.dpi} DPI: ${p.widthCm.toFixed(1)} × ${p.heightCm.toFixed(1)} cm`);
+      });
+    }
+    return lines.join('\n');
+  };
+
+  const copyMetadataToClipboard = async () => {
+    if (!metadata) return;
+    try {
+      const text = formatMetadataForClipboard(metadata);
+      await navigator.clipboard.writeText(text);
+      setCopiedToClipboard(true);
+      setTimeout(() => setCopiedToClipboard(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy to clipboard:', err);
+    }
   };
 
   const formatBitrate = (bps?: number) => bps ? `${(bps / 1000).toFixed(2)} kbps` : 'N/A';
@@ -288,6 +331,29 @@ const App: React.FC = () => {
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div className="flex gap-3 flex-wrap">
+              <button
+                onClick={copyMetadataToClipboard}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase transition-all border ${
+                  copiedToClipboard
+                    ? 'bg-green-500/20 border-green-500/50 text-green-400'
+                    : 'bg-blue-500/10 border-blue-500/30 text-blue-400 hover:border-blue-500/50 hover:bg-blue-500/20'
+                }`}
+              >
+                {copiedToClipboard ? (
+                  <>
+                    <Check size={16} />
+                    コピーしました
+                  </>
+                ) : (
+                  <>
+                    <Copy size={16} />
+                    メタデータをコピー
+                  </>
+                )}
+              </button>
             </div>
 
             <section className="space-y-4">
